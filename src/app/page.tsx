@@ -89,7 +89,7 @@ export default function Home() {
   return (
     <div className="min-h-screen">
       {/* 导航栏 */}
-      <nav className="fixed top-0 left-0 right-0 z-50 backdrop-blur-sm border-b border-light" style={{backgroundColor: 'rgba(248, 249, 250, 0.95)'}}>
+      <nav className="fixed top-0 left-0 right-0 z-50 backdrop-blur-sm border-b border-light" style={{backgroundColor: 'rgba(251, 249, 244, 0.95)'}}>
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
@@ -150,7 +150,7 @@ export default function Home() {
       </section>
 
       {/* 服务特色区块 */}
-      <section id="features" className="py-20 bg-primary">
+      <section id="features" className="py-20" style={{backgroundColor: '#ffffff'}}>
         <div className="container mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-primary mb-4">核心特色</h2>
@@ -200,7 +200,7 @@ export default function Home() {
       </section>
 
       {/* 服务模块展示 */}
-      <section id="services" className="py-20 bg-secondary">
+      <section id="services" className="py-20" style={{backgroundColor: '#ffffff'}}>
         <div className="container mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-primary mb-4">核心服务</h2>

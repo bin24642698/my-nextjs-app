@@ -7,7 +7,7 @@
   
   /* 基于基本色调的衍生颜色 */
   --primary-bg: var(--color-light);
-  --secondary-bg: #f8f9fa;     /* 浅灰背景 - 卡片背景和次要区域 */
+  --secondary-bg: var(--color-light);     /* 统一为米黄色背景 */
   
   --primary-text: var(--color-dark);
   --secondary-text: #6c757d;  /* 中灰色文字 */
@@ -80,7 +80,7 @@ body {
 
 /* 通用卡片样式 */
 .card {
-  background: var(--secondary-bg);
+  background: #ffffff;
   border: 1px solid var(--border-light);
   border-radius: 12px;
   padding: 24px;
