@@ -1,5 +1,4 @@
 'use client';
-import type { DatabaseSchema } from './schema';
 
 let dbInstance: IDBDatabase | null = null;
 

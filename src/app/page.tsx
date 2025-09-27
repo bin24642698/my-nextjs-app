@@ -7,7 +7,7 @@ import type { DocumentSchema } from '@/utils/idb/schema';
 
 export default function Home() {
   const router = useRouter();
-  const { documents: uploadedFiles, addDocument, deleteDocument, clearAllDocuments, loading, error } = useIDBDocuments();
+  const { documents: uploadedFiles, addDocument, deleteDocument, clearAllDocuments } = useIDBDocuments();
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 

@@ -14,12 +14,12 @@ export interface DocumentSchema {
 
 export interface SettingsSchema {
   key: string;
-  value: any;
+  value: unknown;
 }
 
 export interface CacheSchema {
   url: string;
-  data: any;
+  data: unknown;
   expires: number;
 }
 

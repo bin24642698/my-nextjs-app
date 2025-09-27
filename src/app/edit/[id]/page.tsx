@@ -1,6 +1,5 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import TiptapEditor from '@/components/TiptapEditor';
 import { useIDBDocument } from '@/hooks/useIDBDocument';

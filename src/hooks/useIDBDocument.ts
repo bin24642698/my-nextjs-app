@@ -4,7 +4,7 @@ import { DocumentService } from '@/utils/idb/documents';
 import type { DocumentSchema } from '@/utils/idb/schema';
 
 // 防抖函数
-function debounce<T extends (...args: any[]) => any>(func: T, delay: number): T {
+function debounce<T extends (...args: unknown[]) => unknown>(func: T, delay: number): T {
   let timeoutId: NodeJS.Timeout;
   return ((...args: Parameters<T>) => {
     clearTimeout(timeoutId);
@@ -101,18 +101,20 @@ export function useIDBDocument(id?: string) {
   }, []);
 
   // 保存文档（防抖）
-  const saveDocument = useCallback(
-    debounce(async (updates: Partial<DocumentSchema>) => {
-      if (!document) return;
+  const saveDocument = useCallback((updates: Partial<DocumentSchema>) => {
+    if (!document) return;
+
+    const debouncedSave = debounce(async (updatedData: Partial<DocumentSchema>) => {
       try {
-        const updated = await DocumentService.updateDocument(document.id, updates);
+        const updated = await DocumentService.updateDocument(document.id, updatedData);
         setDocument(updated);
       } catch (err) {
         setError(err as Error);
       }
-    }, 500),
-    [document]
-  );
+    }, 500);
+
+    return debouncedSave(updates);
+  }, [document]);
 
   useEffect(() => {
     if (id) {
