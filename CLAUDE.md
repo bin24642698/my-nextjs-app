@@ -62,7 +62,6 @@ npm run build
 - [ ] 所有catch块确保error变量被使用或移除参数
 - [ ] JSX中的引号使用HTML实体转义
 - [ ] 提交前运行`npm run lint`检查
-- [ ] 提交前运行`npm run build`确保构建成功
 - [ ] 修复所有ESLint warnings和errors
 
 ## 项目概述

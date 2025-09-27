@@ -1,8 +1,10 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function Home() {
+  const router = useRouter();
   const [uploadedFiles, setUploadedFiles] = useState<Array<{
     id: string;
     name: string;
@@ -13,6 +15,26 @@ export default function Home() {
   }>>([]);
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // 从 localStorage 加载文件
+  useEffect(() => {
+    const storedFiles = localStorage.getItem('uploadedFiles');
+    if (storedFiles) {
+      try {
+        const files = JSON.parse(storedFiles);
+        setUploadedFiles(files);
+      } catch (error) {
+        console.error('加载文件失败:', error);
+      }
+    }
+  }, []);
+
+  // 保存文件到 localStorage
+  useEffect(() => {
+    if (uploadedFiles.length > 0) {
+      localStorage.setItem('uploadedFiles', JSON.stringify(uploadedFiles));
+    }
+  }, [uploadedFiles]);
 
   // 检测文本编码并转换为UTF-8
   const detectAndDecodeText = async (file: File): Promise<string> => {
@@ -133,6 +155,15 @@ export default function Home() {
 
   const deleteFile = (id: string) => {
     setUploadedFiles(prev => prev.filter(file => file.id !== id));
+    // 如果删除后没有文件了，清空 localStorage
+    const remainingFiles = uploadedFiles.filter(file => file.id !== id);
+    if (remainingFiles.length === 0) {
+      localStorage.removeItem('uploadedFiles');
+    }
+  };
+
+  const handleFileClick = (fileId: string) => {
+    router.push(`/edit/${fileId}`);
   };
 
   const formatFileSize = (bytes: number) => {
@@ -221,10 +252,13 @@ export default function Home() {
           {uploadedFiles.length > 0 ? (
             <div className="grid grid-cols-[repeat(auto-fill,minmax(320px,320px))] gap-6 justify-center">
               {uploadedFiles.map((file) => (
-                <div key={file.id} className="card p-4 w-[320px] h-[320px] flex flex-col relative">
+                <div key={file.id} className="card p-4 w-[320px] h-[320px] flex flex-col relative cursor-pointer hover:shadow-lg transition-shadow" onClick={() => handleFileClick(file.id)}>
                   <button
-                    onClick={() => deleteFile(file.id)}
-                    className="absolute top-2 right-2 p-2 text-gray-400 hover:text-red-500 transition-colors"
+                    onClick={(e) => {
+                      e.stopPropagation(); // 阻止卡片点击事件
+                      deleteFile(file.id);
+                    }}
+                    className="absolute top-2 right-2 p-2 text-gray-400 hover:text-red-500 transition-colors z-10"
                     title="删除文件"
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -259,6 +293,14 @@ export default function Home() {
                         已截断，显示前 300 字符
                       </p>
                     )}
+                    <div className="mt-2 pt-2 border-t border-border-light flex items-center justify-center">
+                      <span className="text-xs text-secondary flex items-center">
+                        <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                        点击编辑
+                      </span>
+                    </div>
                   </div>
                 </div>
               ))}
