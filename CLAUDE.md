@@ -1,9 +1,69 @@
-# rulers 
+# rulers
 1.你优先创建和复用组件,不要每次都创建不同的代码.
 
 # CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## 🚨 构建错误预防指南
+
+**重要：在代码提交前必须解决以下常见ESLint错误，确保构建成功**
+
+### 常见ESLint错误及解决方案
+
+#### 1. 未使用的变量错误
+```
+error: 'error' is defined but never used. @typescript-eslint/no-unused-vars
+```
+
+**解决方案**：
+- 如果catch块中的error变量未使用，改用空的catch块：
+```tsx
+// ❌ 错误
+try {
+  // code
+} catch (error) {
+  console.log('error occurred');
+}
+
+// ✅ 正确
+try {
+  // code
+} catch {
+  console.log('error occurred');
+}
+```
+
+#### 2. React中未转义的引号错误
+```
+error: `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`. react/no-unescaped-entities
+```
+
+**解决方案**：
+- JSX中的引号必须使用HTML实体：
+```tsx
+// ❌ 错误
+<p>点击"上传文件"按钮</p>
+
+// ✅ 正确
+<p>点击&quot;上传文件&quot;按钮</p>
+```
+
+#### 3. 必须在提交前运行的检查命令
+```bash
+# 检查ESLint错误
+npm run lint
+
+# 检查TypeScript类型错误
+npm run build
+```
+
+### 预防措施清单
+- [ ] 所有catch块确保error变量被使用或移除参数
+- [ ] JSX中的引号使用HTML实体转义
+- [ ] 提交前运行`npm run lint`检查
+- [ ] 提交前运行`npm run build`确保构建成功
+- [ ] 修复所有ESLint warnings和errors
 
 ## 项目概述
 

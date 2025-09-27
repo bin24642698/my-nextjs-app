@@ -29,7 +29,7 @@ export default function Home() {
           const utfText = utfDecoder.decode(uint8Array);
           resolve(utfText);
           return;
-        } catch (error) {
+        } catch {
           // UTF-8解码失败，尝试GBK解码
           console.log('UTF-8解码失败，尝试GBK解码');
         }
@@ -40,7 +40,7 @@ export default function Home() {
           const gbkText = gbkDecoder.decode(uint8Array);
           resolve(gbkText);
           return;
-        } catch (error) {
+        } catch {
           // GBK解码失败，尝试GB2312
           console.log('GBK解码失败，尝试GB2312解码');
         }
@@ -51,7 +51,7 @@ export default function Home() {
           const gb2312Text = gb2312Decoder.decode(uint8Array);
           resolve(gb2312Text);
           return;
-        } catch (error) {
+        } catch {
           // 所有编码都失败，使用默认UTF-8（可能包含乱码）
           console.log('所有编码解码失败，使用默认UTF-8');
           const fallbackDecoder = new TextDecoder('utf-8', { fatal: false });
@@ -274,7 +274,7 @@ export default function Home() {
                 </div>
                 <h2 className="text-2xl font-bold text-primary mb-4">开始上传您的文本文件</h2>
                 <p className="text-secondary text-lg mb-6">
-                  点击右上角的"上传文件"按钮，或直接拖拽文件到页面任意位置
+                  点击右上角的&quot;上传文件&quot;按钮，或直接拖拽文件到页面任意位置
                 </p>
                 <div className="bg-light/50 rounded-lg p-4 max-w-md mx-auto">
                   <p className="text-sm text-secondary">
