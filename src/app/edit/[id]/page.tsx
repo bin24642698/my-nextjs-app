@@ -3,58 +3,24 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import TiptapEditor from '@/components/TiptapEditor';
-
-interface FileData {
-  id: string;
-  name: string;
-  content: string;
-  size: number;
-  originalSize: number;
-  uploadTime: string;
-}
+import { useIDBDocument } from '@/hooks/useIDBDocument';
 
 export default function EditPage() {
   const params = useParams();
   const router = useRouter();
-  const [fileData, setFileData] = useState<FileData | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fileId = params.id as string;
-
-    // 从 localStorage 获取文件数据
-    const storedFiles = localStorage.getItem('uploadedFiles');
-    if (storedFiles) {
-      const files: FileData[] = JSON.parse(storedFiles);
-      const file = files.find(f => f.id === fileId);
-      if (file) {
-        setFileData(file);
-      }
-    }
-    setLoading(false);
-  }, [params.id]);
+  const fileId = params.id as string;
+  const { document: fileData, loading, error, saveDocument } = useIDBDocument(fileId);
 
   const handleContentChange = (newContent: string) => {
     if (!fileData) return;
 
-    // 更新文件内容
-    const updatedFile = { ...fileData, content: newContent };
-    setFileData(updatedFile);
-
-    // 更新 localStorage
-    const storedFiles = localStorage.getItem('uploadedFiles');
-    if (storedFiles) {
-      const files: FileData[] = JSON.parse(storedFiles);
-      const updatedFiles = files.map(f =>
-        f.id === fileData.id ? updatedFile : f
-      );
-      localStorage.setItem('uploadedFiles', JSON.stringify(updatedFiles));
-    }
+    // 使用 IndexedDB Hook 保存内容（防抖）
+    saveDocument({ content: newContent });
   };
 
   const handleSave = () => {
-    // 保存提示
-    alert('文件已保存到本地存储');
+    // 自动保存已通过防抖处理，这里只是提示
+    alert('文件已自动保存到IndexedDB');
   };
 
   const handleBack = () => {
@@ -67,6 +33,20 @@ export default function EditPage() {
         <div className="text-center">
           <div className="w-8 h-8 border-4 border-gray-300 border-t-gray-900 rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-secondary">加载中...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="h-screen flex items-center justify-center" style={{backgroundColor: 'var(--primary-bg)'}}>
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-red-600 mb-4">加载失败</h1>
+          <p className="text-secondary mb-4">{error.message}</p>
+          <button onClick={handleBack} className="btn-primary">
+            返回首页
+          </button>
         </div>
       </div>
     );

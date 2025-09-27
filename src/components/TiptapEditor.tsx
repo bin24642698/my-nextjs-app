@@ -34,13 +34,9 @@ export default function TiptapEditor({ initialContent = '', onChange }: TiptapEd
     },
     editorProps: {
       attributes: {
-        class: 'focus:outline-none p-4 h-full overflow-y-auto',
+        class: 'tiptap-content',
         style: `
-          max-width: none;
           color: var(--primary-text);
-          line-height: 1.6;
-          white-space: pre-wrap;
-          word-wrap: break-word;
           font-family: inherit;
         `,
       },
@@ -239,7 +235,7 @@ export default function TiptapEditor({ initialContent = '', onChange }: TiptapEd
 
       {/* 编辑器 */}
       <div
-        className="flex-1 border border-border-light rounded-lg overflow-hidden tiptap-editor"
+        className="flex-1 border border-border-light rounded-lg tiptap-editor"
         style={{ backgroundColor: 'var(--primary-bg)', minHeight: 0 }}
       >
         <EditorContent editor={editor} />

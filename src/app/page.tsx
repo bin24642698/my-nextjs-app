@@ -1,40 +1,15 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { useIDBDocuments } from '@/hooks/useIDBDocument';
+import type { DocumentSchema } from '@/utils/idb/schema';
 
 export default function Home() {
   const router = useRouter();
-  const [uploadedFiles, setUploadedFiles] = useState<Array<{
-    id: string;
-    name: string;
-    content: string;
-    size: number;
-    originalSize: number;
-    uploadTime: string;
-  }>>([]);
+  const { documents: uploadedFiles, addDocument, deleteDocument, clearAllDocuments, loading, error } = useIDBDocuments();
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // 从 localStorage 加载文件
-  useEffect(() => {
-    const storedFiles = localStorage.getItem('uploadedFiles');
-    if (storedFiles) {
-      try {
-        const files = JSON.parse(storedFiles);
-        setUploadedFiles(files);
-      } catch (error) {
-        console.error('加载文件失败:', error);
-      }
-    }
-  }, []);
-
-  // 保存文件到 localStorage
-  useEffect(() => {
-    if (uploadedFiles.length > 0) {
-      localStorage.setItem('uploadedFiles', JSON.stringify(uploadedFiles));
-    }
-  }, [uploadedFiles]);
 
   // 检测文本编码并转换为UTF-8
   const detectAndDecodeText = async (file: File): Promise<string> => {
@@ -87,16 +62,16 @@ export default function Home() {
     });
   };
 
-  const handleFileUpload = (files: FileList | null) => {
+  const handleFileUpload = async (files: FileList | null) => {
     if (!files) return;
 
-    Array.from(files).forEach(async (file) => {
+    for (const file of Array.from(files)) {
       if (file.type === 'text/plain' || file.name.endsWith('.txt')) {
         // 检查原始文件大小限制（20MB）
         const maxFileSize = 20 * 1024 * 1024; // 20MB
         if (file.size > maxFileSize) {
           alert(`文件 ${file.name} 过大，原始文件不能超过 20MB`);
-          return;
+          continue;
         }
 
         try {
@@ -108,21 +83,22 @@ export default function Home() {
 
           if (utf8Content.byteLength > maxUtf8Size) {
             alert(`文件 ${file.name} 转换为UTF-8后过大，不能超过 30MB`);
-            return;
+            continue;
           }
 
           // 存储UTF-8格式的内容
           const utf8ContentString = new TextDecoder('utf-8').decode(utf8Content);
 
-          const newFile = {
-            id: crypto.randomUUID(),
+          const newFile: Omit<DocumentSchema, 'id' | 'createdAt' | 'updatedAt'> = {
             name: file.name,
             content: utf8ContentString,
             size: utf8Content.byteLength, // 使用UTF-8编码后的大小
             originalSize: file.size, // 保存原始文件大小
-            uploadTime: new Date().toLocaleString('zh-CN')
+            uploadTime: new Date().toLocaleString('zh-CN'),
+            status: 'draft'
           };
-          setUploadedFiles(prev => [...prev, newFile]);
+
+          await addDocument(newFile);
         } catch (error) {
           console.error('文件处理失败:', error);
           alert(`文件 ${file.name} 处理失败: ${error instanceof Error ? error.message : '未知错误'}`);
@@ -130,7 +106,7 @@ export default function Home() {
       } else {
         alert('请只上传 .txt 文件');
       }
-    });
+    }
   };
 
   const handleDrop = (e: React.DragEvent) => {
@@ -153,12 +129,21 @@ export default function Home() {
     handleFileUpload(e.target.files);
   };
 
-  const deleteFile = (id: string) => {
-    setUploadedFiles(prev => prev.filter(file => file.id !== id));
-    // 如果删除后没有文件了，清空 localStorage
-    const remainingFiles = uploadedFiles.filter(file => file.id !== id);
-    if (remainingFiles.length === 0) {
-      localStorage.removeItem('uploadedFiles');
+  const deleteFile = async (id: string) => {
+    try {
+      await deleteDocument(id);
+    } catch (error) {
+      console.error('删除文件失败:', error);
+      alert('删除文件失败');
+    }
+  };
+
+  const handleClearAll = async () => {
+    try {
+      await clearAllDocuments();
+    } catch (error) {
+      console.error('清空文件失败:', error);
+      alert('清空文件失败');
     }
   };
 
@@ -213,7 +198,7 @@ export default function Home() {
 
           {uploadedFiles.length > 0 && (
             <button
-              onClick={() => setUploadedFiles([])}
+              onClick={handleClearAll}
               className="btn-secondary px-4 py-2 shadow-lg"
             >
               清空全部

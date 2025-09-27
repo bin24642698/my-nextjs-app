@@ -346,37 +346,66 @@ body {
   display: flex;
   flex-direction: column;
   height: 100%;
+  position: relative;
+}
+
+/* EditorContent 包装器 */
+.tiptap-editor .ProseMirror-focused {
+  outline: none !important;
 }
 
 .tiptap-editor .ProseMirror {
   outline: none !important;
   padding: 1rem;
   height: 100%;
-  overflow-y: auto;
+  overflow-y: scroll !important;  /* 强制显示滚动条 */
+  overflow-x: hidden !important;
   white-space: pre-wrap;
   word-wrap: break-word;
   line-height: 1.6;
   color: var(--primary-text);
   font-family: inherit;
+  box-sizing: border-box;
+  resize: none;
+  border: none;
+  background: transparent;
 }
 
-/* 自定义滚动条样式 */
+/* 强制显示滚动条，即使内容不超过容器高度 */
 .tiptap-editor .ProseMirror::-webkit-scrollbar {
-  width: 8px;
+  width: 14px !important;
+  height: 14px !important;
 }
 
 .tiptap-editor .ProseMirror::-webkit-scrollbar-track {
-  background: var(--color-light);
-  border-radius: 4px;
+  background: #f1f1f1 !important;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
 }
 
 .tiptap-editor .ProseMirror::-webkit-scrollbar-thumb {
-  background: var(--border-medium);
-  border-radius: 4px;
+  background: #c1c1c1 !important;
+  border-radius: 8px;
+  border: 2px solid #f1f1f1;
+  min-height: 40px;
 }
 
 .tiptap-editor .ProseMirror::-webkit-scrollbar-thumb:hover {
-  background: var(--border-dark);
+  background: #a8a8a8 !important;
+}
+
+.tiptap-editor .ProseMirror::-webkit-scrollbar-corner {
+  background: #f1f1f1;
+}
+
+/* 确保 EditorContent 容器正确设置高度 */
+.tiptap-editor > div {
+  height: 100% !important;
+  overflow: hidden;
+}
+
+.tiptap-editor > div > div {
+  height: 100% !important;
 }
 
 .tiptap-editor .ProseMirror p {
