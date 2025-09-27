@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(codex:*)",
+      "Read(//c/Users/Bin/.codex/**)",
+      "Bash(git add src/app/globals.css src/app/page.tsx)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nfeat: 优化界面背景色设计\n\n- 统一主背景为米黄色，提升视觉一致性\n- 核心特色和核心服务区域保持白色背景，增强内容可读性\n- 更新卡片背景为白色，在米黄色背景上形成良好对比\n- 调整导航栏为半透明米黄色背景\n\n🤖 Generated with [Claude Code](https://claude.ai/code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(tree -I 'node_modules|.next|.git' -L 3)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

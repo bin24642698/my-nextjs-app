@@ -1,0 +1,425 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import { EditorContent, useEditor } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import Placeholder from "@tiptap/extension-placeholder";
+import type { JSONContent } from "@tiptap/core";
+
+type Chapter = {
+  id: string;
+  title: string;
+  content: JSONContent;
+};
+
+type Message = { id: string; role: "user" | "assistant"; content: string };
+
+const CHAPTER_STORAGE_KEY = "ai_writer_chapters";
+const ACTIVE_CHAPTER_KEY = "ai_writer_active";
+
+const createInitialContent = (title: string): JSONContent => ({
+  type: "doc",
+  content: [
+    {
+      type: "heading",
+      attrs: { level: 1 },
+      content: [{ type: "text", text: title }],
+    },
+    {
+      type: "paragraph",
+      content: [
+        {
+          type: "text",
+          text: "开始写作，所有内容都会以 JSON 格式保存在浏览器本地�?,
+        },
+      ],
+    },
+  ],
+});
+
+const createDefaultChapters = (): Chapter[] => [
+  { id: "chapter-intro", title: "引言", content: createInitialContent("引言") },
+  { id: "chapter-1", title: "第一�?, content: createInitialContent("第一�?) },
+  { id: "chapter-2", title: "第二�?, content: createInitialContent("第二�?) },
+];
+
+const createChapterId = () => {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  return `chapter-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+};
+
+export default function Home() {
+  const defaultChaptersRef = useRef<Chapter[]>(createDefaultChapters());
+  const [chapters, setChapters] = useState<Chapter[]>(defaultChaptersRef.current);
+  const [activeChapterId, setActiveChapterId] = useState<string>(
+    defaultChaptersRef.current[0]?.id ?? ""
+  );
+  const [isInitialized, setIsInitialized] = useState(false);
+  const activeChapterRef = useRef(activeChapterId);
+
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      id: "m1",
+      role: "assistant",
+      content: "欢迎使用 AI 写作界面。所有章节内容将存储在浏览器本地（仅 UI）�?,
+    },
+  ]);
+  const [input, setInput] = useState("");
+
+  const editor = useEditor(
+    {
+      extensions: [
+        StarterKit,
+        Placeholder.configure({ placeholder: "开始写作�? }),
+      ],
+      content: defaultChaptersRef.current[0]?.content ?? createInitialContent("AI 写作项目"),
+      autofocus: true,
+      immediatelyRender: false,
+      editorProps: {
+        attributes: {
+          class: "tiptap prose max-w-none focus:outline-none",
+        },
+      },
+      onUpdate: ({ editor }) => {
+        const currentId = activeChapterRef.current;
+        if (!currentId) return;
+        const json = editor.getJSON();
+        setChapters((prev) =>
+          prev.map((chapter) =>
+            chapter.id === currentId ? { ...chapter, content: json } : chapter
+          )
+        );
+      },
+    },
+    []
+  );
+
+  useEffect(() => {
+    activeChapterRef.current = activeChapterId;
+  }, [activeChapterId]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    try {
+      const storedChapters = window.localStorage.getItem(CHAPTER_STORAGE_KEY);
+      const storedActiveId = window.localStorage.getItem(ACTIVE_CHAPTER_KEY);
+
+      if (storedChapters) {
+        const parsed: unknown = JSON.parse(storedChapters);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const valid = parsed.every((item) =>
+            typeof item === "object" &&
+            item !== null &&
+            "id" in item &&
+            "title" in item &&
+            "content" in item
+          );
+          if (valid) {
+            setChapters(parsed as Chapter[]);
+            if (
+              storedActiveId &&
+              (parsed as Chapter[]).some((chapter) => chapter.id === storedActiveId)
+            ) {
+              setActiveChapterId(storedActiveId);
+            } else {
+              setActiveChapterId((parsed as Chapter[])[0]?.id ?? "");
+            }
+            setIsInitialized(true);
+            return;
+          }
+        }
+      }
+    } catch (error) {
+      console.error("读取章节数据失败", error);
+    }
+
+    setIsInitialized(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isInitialized) return;
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem(CHAPTER_STORAGE_KEY, JSON.stringify(chapters));
+  }, [chapters, isInitialized]);
+
+  useEffect(() => {
+    if (!isInitialized) return;
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem(ACTIVE_CHAPTER_KEY, activeChapterId);
+  }, [activeChapterId, isInitialized]);
+
+  useEffect(() => {
+    if (!isInitialized) return;
+    if (!editor) return;
+    const current = chapters.find((chapter) => chapter.id === activeChapterId);
+    if (current) {
+      editor.commands.setContent(current.content, false);
+    } else {
+      editor.commands.clearContent(true);
+    }
+  }, [editor, activeChapterId, chapters, isInitialized]);
+
+  const addChapter = () => {
+    const index = chapters.length + 1;
+    const title = `新章�?${index}`;
+    const chapter: Chapter = {
+      id: createChapterId(),
+      title,
+      content: createInitialContent(title),
+    };
+    setChapters((prev) => [...prev, chapter]);
+    setActiveChapterId(chapter.id);
+  };
+
+  const renameChapter = (chapter: Chapter) => {
+    const nextTitle = window.prompt("请输入新的章节标�?, chapter.title);
+    if (!nextTitle) return;
+    const trimmed = nextTitle.trim();
+    if (!trimmed) return;
+    setChapters((prev) =>
+      prev.map((item) =>
+        item.id === chapter.id ? { ...item, title: trimmed } : item
+      )
+    );
+  };
+
+  const removeChapter = (chapter: Chapter) => {
+    if (chapters.length <= 1) {
+      window.alert("至少需要保留一个章节�?);
+      return;
+    }
+    const confirmed = window.confirm(`确认删除�?{chapter.title}”吗？删除后无法恢复。`);
+    if (!confirmed) return;
+    setChapters((prev) => {
+      const filtered = prev.filter((item) => item.id !== chapter.id);
+      if (filtered.length > 0 && chapter.id === activeChapterRef.current) {
+        const fallback = filtered[filtered.length - 1];
+        setActiveChapterId(fallback.id);
+      }
+      return filtered;
+    });
+  };
+
+  const onSend = (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!input.trim()) return;
+    const userMsg: Message = {
+      id: `m${Date.now()}`,
+      role: "user",
+      content: input.trim(),
+    };
+    setMessages((prev) => [...prev, userMsg]);
+    setInput("");
+  };
+
+  return (
+    <div className="h-screen w-full flex bg-primary">
+      <aside className="hidden md:flex md:w-64 lg:w-72 xl:w-80 border-r border-light bg-primary flex-col">
+        <div className="px-4 py-3 border-b border-light flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: "var(--color-dark)" }}>
+              <span className="text-white font-bold text-sm">AI</span>
+            </div>
+            <span className="text-primary font-semibold">写作项目</span>
+          </div>
+          <button onClick={addChapter} className="btn-secondary px-3 py-2 text-sm">
+            新章�?          </button>
+        </div>
+        <div className="flex-1 overflow-auto p-2 space-y-2">
+          {chapters.map((chapter) => {
+            const isActive = chapter.id === activeChapterId;
+            return (
+              <div
+                key={chapter.id}
+                className={`border rounded-lg ${
+                  isActive ? "border-dark bg-secondary" : "border-light"
+                } transition-colors`}
+              >
+                <button
+                  type="button"
+                  onClick={() => setActiveChapterId(chapter.id)}
+                  className="w-full text-left px-3 py-2"
+                  title={chapter.title}
+                >
+                  <div className="text-sm text-primary truncate">{chapter.title}</div>
+                  <div className="text-xs text-muted">点击进入并在右侧编辑</div>
+                </button>
+                <div className="flex items-center justify-end gap-2 px-3 pb-2">
+                  <button
+                    type="button"
+                    className="text-xs text-muted hover:text-primary transition-colors"
+                    onClick={() => renameChapter(chapter)}
+                  >
+                    重命�?                  </button>
+                  <span className="text-muted">·</span>
+                  <button
+                    type="button"
+                    className="text-xs text-muted hover:text-error transition-colors"
+                    onClick={() => removeChapter(chapter)}
+                  >
+                    删除
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </aside>
+
+      <main className="flex-1 min-w-0 flex flex-col">
+        <div className="sticky top-0 z-10 bg-primary/80 backdrop-blur-sm border-b border-light">
+          <div className="flex items-center gap-2 px-4 py-3 overflow-x-auto">
+            <span className="text-sm text-muted mr-2">格式</span>
+            <div className="flex items-center gap-2">
+              <button
+                className={`toolbar-btn ${editor?.isActive("heading", { level: 1 }) ? "active" : ""}`}
+                onClick={() => editor?.chain().focus().toggleHeading({ level: 1 }).run()}
+                disabled={!editor}
+              >
+                H1
+              </button>
+              <button
+                className={`toolbar-btn ${editor?.isActive("heading", { level: 2 }) ? "active" : ""}`}
+                onClick={() => editor?.chain().focus().toggleHeading({ level: 2 }).run()}
+                disabled={!editor}
+              >
+                H2
+              </button>
+              <button
+                className={`toolbar-btn ${editor?.isActive("heading", { level: 3 }) ? "active" : ""}`}
+                onClick={() => editor?.chain().focus().toggleHeading({ level: 3 }).run()}
+                disabled={!editor}
+              >
+                H3
+              </button>
+            </div>
+
+            <span className="text-muted mx-1">|</span>
+
+            <div className="flex items-center gap-2">
+              <button
+                className={`toolbar-btn ${editor?.isActive("bold") ? "active" : ""}`}
+                onClick={() => editor?.chain().focus().toggleBold().run()}
+                disabled={!editor?.can().chain().focus().toggleBold().run()}
+              >
+                B
+              </button>
+              <button
+                className={`toolbar-btn ${editor?.isActive("italic") ? "active" : ""}`}
+                onClick={() => editor?.chain().focus().toggleItalic().run()}
+                disabled={!editor?.can().chain().focus().toggleItalic().run()}
+              >
+                <span className="italic">I</span>
+              </button>
+              <button
+                className={`toolbar-btn ${editor?.isActive("strike") ? "active" : ""}`}
+                onClick={() => editor?.chain().focus().toggleStrike().run()}
+                disabled={!editor?.can().chain().focus().toggleStrike().run()}
+              >
+                <span className="line-through">S</span>
+              </button>
+              <button
+                className={`toolbar-btn ${editor?.isActive("blockquote") ? "active" : ""}`}
+                onClick={() => editor?.chain().focus().toggleBlockquote().run()}
+              >
+                �?�?              </button>
+              <button
+                className={`toolbar-btn ${editor?.isActive("codeBlock") ? "active" : ""}`}
+                onClick={() => editor?.chain().focus().toggleCodeBlock().run()}
+              >
+                {"</>"}
+              </button>
+            </div>
+
+            <span className="text-muted mx-1">|</span>
+
+            <div className="flex items-center gap-2">
+              <button
+                className={`toolbar-btn ${editor?.isActive("bulletList") ? "active" : ""}`}
+                onClick={() => editor?.chain().focus().toggleBulletList().run()}
+              >
+                �?列表
+              </button>
+              <button
+                className={`toolbar-btn ${editor?.isActive("orderedList") ? "active" : ""}`}
+                onClick={() => editor?.chain().focus().toggleOrderedList().run()}
+              >
+                1. 列表
+              </button>
+            </div>
+
+            <span className="text-muted mx-1">|</span>
+
+            <div className="ml-auto flex items-center gap-2">
+              <button
+                className="btn-secondary px-3 py-2 text-sm"
+                onClick={() => editor?.chain().focus().undo().run()}
+                disabled={!editor?.can().chain().focus().undo().run()}
+              >
+                撤销
+              </button>
+              <button
+                className="btn-secondary px-3 py-2 text-sm"
+                onClick={() => editor?.chain().focus().redo().run()}
+                disabled={!editor?.can().chain().focus().redo().run()}
+              >
+                重做
+              </button>
+              <button className="btn-primary px-3 py-2 text-sm" type="button">
+                已自动保�?              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-auto">
+          <div className="max-w-3xl mx-auto px-4 py-6">
+            <div className="rounded-xl border border-light bg-secondary p-4">
+              <EditorContent editor={editor} />
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <aside className="hidden lg:flex lg:w-80 xl:w-96 border-l border-light bg-primary flex-col">
+        <div className="px-4 py-3 border-b border-light flex items-center justify-between">
+          <span className="text-primary font-semibold">写作助手</span>
+          <span className="text-muted text-sm">�?UI 展示</span>
+        </div>
+        <div className="flex-1 overflow-auto p-4 space-y-3">
+          {messages.map((message) => (
+            <div
+              key={message.id}
+              className={`w-full flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
+            >
+              <div
+                className={`max-w-[80%] rounded-lg px-3 py-2 border ${
+                  message.role === "user"
+                    ? "bg-[var(--color-dark)] text-white border-[var(--color-dark)]"
+                    : "bg-secondary border-light text-primary"
+                }`}
+              >
+                <div className="whitespace-pre-wrap text-sm">{message.content}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+        <form onSubmit={onSend} className="border-t border-light p-3">
+          <div className="flex items-center gap-2">
+            <input
+              className="form-input flex-1"
+              placeholder="输入消息，按 Enter 发送（�?UI�?
+              value={input}
+              onChange={(event) => setInput(event.target.value)}
+            />
+            <button type="submit" className="btn-primary px-4 py-2 text-sm">
+              发�?            </button>
+          </div>
+        </form>
+      </aside>
+    </div>
+  );
+}
+
