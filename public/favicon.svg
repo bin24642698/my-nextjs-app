@@ -1,0 +1,24 @@
+<svg width="32" height="32" xmlns="http://www.w3.org/2000/svg">
+  <!-- 欧盟蓝背景 -->
+  <rect width="32" height="32" fill="#003399"/>
+
+  <!-- 外围12个小AI标志（模仿欧盟星星排列） -->
+  <g fill="#FFD700" font-family="Arial, sans-serif" font-weight="bold" font-size="4" text-anchor="middle" dominant-baseline="central">
+    <!-- 12个位置的AI文字，按圆形排列 -->
+    <text x="16" y="4" transform="rotate(0 16 4)">AI</text>
+    <text x="26" y="8" transform="rotate(30 26 8)">AI</text>
+    <text x="28" y="16" transform="rotate(60 28 16)">AI</text>
+    <text x="26" y="24" transform="rotate(90 26 24)">AI</text>
+    <text x="16" y="28" transform="rotate(120 16 28)">AI</text>
+    <text x="6" y="24" transform="rotate(150 6 24)">AI</text>
+    <text x="4" y="16" transform="rotate(180 4 16)">AI</text>
+    <text x="6" y="8" transform="rotate(210 6 8)">AI</text>
+    <text x="20" y="6" transform="rotate(240 20 6)">AI</text>
+    <text x="24" y="12" transform="rotate(270 24 12)">AI</text>
+    <text x="20" y="20" transform="rotate(300 20 20)">AI</text>
+    <text x="12" y="20" transform="rotate(330 12 20)">AI</text>
+  </g>
+
+  <!-- 中央大AI标志 -->
+  <text x="16" y="16" fill="#FFD700" font-family="Arial, sans-serif" font-weight="bold" font-size="12" text-anchor="middle" dominant-baseline="central">AI</text>
+</svg>
