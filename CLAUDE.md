@@ -16,9 +16,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### API 路由组织规则：
 - **登录相关 API**: 放置在 `app/api/login/` 目录
 - **AI 相关 API**: 放置在 `app/api/ai/` 目录
-- **文件上传 API**: 放置在 `app/api/upload/` 目录
 - **用户管理 API**: 放置在 `app/api/users/` 目录
+- **文件上传下载 API**: 放置在各功能模块下的 upload 子目录，如 `app/api/ai/upload/`、`app/api/users/upload/`
 - **其他业务 API**: 按功能模块在 `app/api/` 下创建对应目录
+
+### 文件上传功能特殊说明：
+- **上传到云端存储**：需要在对应功能模块下创建 upload 子目录的后端 API 路由
+- **上传到浏览器存储**（localStorage/IndexedDB）：无需后端 API，直接在客户端组件中处理
 
 ### API 路由示例：
 ```
@@ -28,14 +32,16 @@ app/api/
 ├── ai/
 │   ├── chat/
 │   │   └── route.ts       # POST /api/ai/chat
-│   └── analyze/
-│       └── route.ts       # POST /api/ai/analyze
-├── upload/
-│   └── route.ts           # POST /api/upload
+│   ├── analyze/
+│   │   └── route.ts       # POST /api/ai/analyze
+│   └── upload/
+│       └── route.ts       # POST /api/ai/upload (AI相关文件上传)
 └── users/
     ├── route.ts           # GET /api/users, POST /api/users
-    └── [id]/
-        └── route.ts       # GET /api/users/[id], PUT /api/users/[id]
+    ├── [id]/
+    │   └── route.ts       # GET /api/users/[id], PUT /api/users/[id]
+    └── upload/
+        └── route.ts       # POST /api/users/upload (用户相关文件上传)
 ```
 
 ## 开发命令
