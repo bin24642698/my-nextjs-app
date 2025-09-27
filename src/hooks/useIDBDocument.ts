@@ -4,12 +4,12 @@ import { DocumentService } from '@/utils/idb/documents';
 import type { DocumentSchema } from '@/utils/idb/schema';
 
 // 防抖函数
-function debounce<T extends (...args: unknown[]) => unknown>(func: T, delay: number): T {
+function debounce<T extends (...args: never[]) => Promise<void>>(func: T, delay: number): (...args: Parameters<T>) => void {
   let timeoutId: NodeJS.Timeout;
-  return ((...args: Parameters<T>) => {
+  return (...args: Parameters<T>) => {
     clearTimeout(timeoutId);
     timeoutId = setTimeout(() => func(...args), delay);
-  }) as T;
+  };
 }
 
 export function useIDBDocuments() {
@@ -113,7 +113,7 @@ export function useIDBDocument(id?: string) {
       }
     }, 500);
 
-    return debouncedSave(updates);
+    debouncedSave(updates);
   }, [document]);
 
   useEffect(() => {
