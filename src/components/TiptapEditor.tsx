@@ -236,7 +236,7 @@ export default function TiptapEditor({ initialContent = '', onChange }: TiptapEd
       {/* 编辑器 */}
       <div
         className="flex-1 border border-border-light rounded-lg tiptap-editor"
-        style={{ backgroundColor: 'var(--primary-bg)', minHeight: 0 }}
+        style={{ backgroundColor: '#ffffff', minHeight: 0 }}
       >
         <EditorContent editor={editor} />
       </div>
