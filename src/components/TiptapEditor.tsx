@@ -4,17 +4,43 @@ import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Link from '@tiptap/extension-link';
 import { useEffect, useCallback, useState } from 'react';
+import type { Chapter } from '@/utils/idb/schema';
 
 interface TiptapEditorProps {
   initialContent?: string;
   onChange?: (content: string) => void;
   fileName?: string;
+  chapters?: Chapter[];
+  currentChapterId?: string;
+  onChapterChange?: (chapterId: string) => void;
+  onChaptersUpdate?: (chapters: Chapter[]) => void;
 }
 
-export default function TiptapEditor({ initialContent = '', onChange, fileName = '未命名文档' }: TiptapEditorProps) {
+export default function TiptapEditor({
+  initialContent = '',
+  onChange,
+  fileName = '未命名文档',
+  chapters: propChapters,
+  currentChapterId: propCurrentChapterId,
+  onChapterChange,
+  onChaptersUpdate
+}: TiptapEditorProps) {
   const [wordCount, setWordCount] = useState(0);
   const [charCount, setCharCount] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
+
+  // 内部章节状态管理（如果没有从props传入）
+  const [internalChapters, setInternalChapters] = useState<Chapter[]>([
+    { id: '1', title: '第一章', content: '' },
+    { id: '2', title: '第二章', content: '' },
+    { id: '3', title: '第三章', content: '' },
+  ]);
+  const [internalCurrentChapterId, setInternalCurrentChapterId] = useState('1');
+
+  // 使用props或内部状态
+  const chapters = propChapters || internalChapters;
+  const currentChapterId = propCurrentChapterId || internalCurrentChapterId;
+  const currentChapter = chapters.find(ch => ch.id === currentChapterId);
 
   const editor = useEditor({
     extensions: [
@@ -30,11 +56,26 @@ export default function TiptapEditor({ initialContent = '', onChange, fileName =
         },
       }),
     ],
-    content: initialContent,
+    content: currentChapter?.content || initialContent,
     immediatelyRender: false,
     shouldRerenderOnTransaction: false,
     onUpdate: ({ editor }) => {
       const text = editor.getText();
+      const html = editor.getHTML();
+
+      // 更新当前章节内容
+      if (currentChapter) {
+        const updatedChapters = chapters.map(ch =>
+          ch.id === currentChapterId ? { ...ch, content: html } : ch
+        );
+
+        if (onChaptersUpdate) {
+          onChaptersUpdate(updatedChapters);
+        } else {
+          setInternalChapters(updatedChapters);
+        }
+      }
+
       onChange?.(text);
 
       // 更新字数统计
@@ -44,29 +85,41 @@ export default function TiptapEditor({ initialContent = '', onChange, fileName =
     },
     editorProps: {
       attributes: {
-        class: 'focus:outline-none',
+        class: 'focus:outline-none prose prose-sm max-w-none',
         style: `
           color: var(--primary-text);
           font-family: inherit;
           padding: 1.5rem;
-          height: auto;
+          min-height: 100%;
         `,
       },
     },
   });
 
-  // 当初始内容改变时更新编辑器
+  // 当章节切换时更新编辑器内容
   useEffect(() => {
-    if (editor && initialContent !== editor.getText()) {
-      const htmlContent = initialContent.replace(/\n/g, '<br>');
-      editor.commands.setContent(htmlContent);
+    if (editor && currentChapter) {
+      const content = currentChapter.content || '';
+      if (content !== editor.getHTML()) {
+        editor.commands.setContent(content);
 
-      // 初始化字数统计
-      const words = initialContent.trim().split(/\s+/).filter(word => word.length > 0);
-      setWordCount(words.length);
-      setCharCount(initialContent.length);
+        // 更新字数统计
+        const text = editor.getText();
+        const words = text.trim().split(/\s+/).filter(word => word.length > 0);
+        setWordCount(words.length);
+        setCharCount(text.length);
+      }
     }
-  }, [editor, initialContent]);
+  }, [editor, currentChapterId, currentChapter]);
+
+  // 处理章节切换
+  const handleChapterClick = useCallback((chapterId: string) => {
+    if (onChapterChange) {
+      onChapterChange(chapterId);
+    } else {
+      setInternalCurrentChapterId(chapterId);
+    }
+  }, [onChapterChange]);
 
   const addLink = useCallback(() => {
     const previousUrl = editor?.getAttributes('link').href;
@@ -289,59 +342,56 @@ export default function TiptapEditor({ initialContent = '', onChange, fileName =
 
       {/* 主编辑区域 */}
       <div className="flex-1 flex overflow-hidden">
+        {/* 左侧章节栏 */}
+        <div className="hidden lg:block w-64 border-r border-light bg-light/30 overflow-y-auto flex-shrink-0">
+          <div className="p-4">
+            <h3 className="font-semibold text-primary mb-3 text-sm flex items-center gap-2">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+              </svg>
+              章节目录
+            </h3>
+            <div className="space-y-2">
+              {chapters.map((chapter) => (
+                <button
+                  key={chapter.id}
+                  onClick={() => handleChapterClick(chapter.id)}
+                  className={`w-full text-left px-4 py-3 rounded-lg transition-all ${
+                    currentChapterId === chapter.id
+                      ? 'bg-dark text-white shadow-md'
+                      : 'bg-white text-secondary hover:bg-light hover:text-primary hover:shadow-sm'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <span className={`text-sm font-medium ${
+                      currentChapterId === chapter.id ? 'text-white' : 'text-primary'
+                    }`}>
+                      {chapter.title}
+                    </span>
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            {/* 添加章节按钮（预留功能） */}
+            <button
+              className="w-full mt-4 px-4 py-2 rounded-lg border-2 border-dashed border-border-light text-secondary hover:border-dark hover:text-primary transition-all text-sm"
+              title="添加新章节"
+            >
+              <div className="flex items-center justify-center gap-2">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                添加章节
+              </div>
+            </button>
+          </div>
+        </div>
+
         {/* 编辑器内容区 */}
         <div className="flex-1 overflow-y-auto bg-white">
           <div className="max-w-4xl mx-auto">
             <EditorContent editor={editor} />
-          </div>
-        </div>
-
-        {/* 侧边栏信息面板（桌面端） */}
-        <div className="hidden lg:block w-64 border-l border-light bg-light/30 p-4 overflow-y-auto">
-          <div className="space-y-4">
-            {/* 文档信息 */}
-            <div className="bg-white rounded-lg p-4 shadow-sm">
-              <h3 className="font-semibold text-primary mb-3 text-sm">文档信息</h3>
-              <div className="space-y-2 text-xs">
-                <div className="flex justify-between">
-                  <span className="text-secondary">文件名:</span>
-                  <span className="text-primary font-medium truncate ml-2" title={fileName}>
-                    {fileName}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-secondary">字数:</span>
-                  <span className="text-primary font-medium">{wordCount}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-secondary">字符数:</span>
-                  <span className="text-primary font-medium">{charCount}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* 快捷键提示 */}
-            <div className="bg-white rounded-lg p-4 shadow-sm">
-              <h3 className="font-semibold text-primary mb-3 text-sm">快捷键</h3>
-              <div className="space-y-2 text-xs text-secondary">
-                <div className="flex justify-between">
-                  <span>粗体</span>
-                  <kbd className="px-2 py-1 bg-light rounded text-xs">Ctrl+B</kbd>
-                </div>
-                <div className="flex justify-between">
-                  <span>斜体</span>
-                  <kbd className="px-2 py-1 bg-light rounded text-xs">Ctrl+I</kbd>
-                </div>
-                <div className="flex justify-between">
-                  <span>撤销</span>
-                  <kbd className="px-2 py-1 bg-light rounded text-xs">Ctrl+Z</kbd>
-                </div>
-                <div className="flex justify-between">
-                  <span>重做</span>
-                  <kbd className="px-2 py-1 bg-light rounded text-xs">Ctrl+Y</kbd>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </div>
@@ -349,7 +399,10 @@ export default function TiptapEditor({ initialContent = '', onChange, fileName =
       {/* 底部状态栏（桌面端） */}
       <div className="hidden sm:block border-t border-light bg-light/30 px-4 py-2 flex-shrink-0">
         <div className="flex items-center justify-between text-xs text-secondary max-w-4xl mx-auto">
-          <span className="truncate flex-1">{fileName}</span>
+          <div className="flex items-center gap-4">
+            <span className="truncate flex-1">{fileName}</span>
+            <span className="text-primary font-medium">· {currentChapter?.title || '未选择章节'}</span>
+          </div>
           <div className="flex items-center gap-4 ml-4">
             <span>{wordCount} 词</span>
             <span>{charCount} 字符</span>

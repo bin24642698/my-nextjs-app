@@ -2,9 +2,12 @@
 
 import { useParams, useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
+import { useState, useEffect } from 'react';
 import { useIDBDocument } from '@/hooks/useIDBDocument';
+import type { Chapter } from '@/utils/idb/schema';
+import { parseChapters, contentToHtml } from '@/utils/chapterParser';
 
-// 动态导入编辑器组件，跳过 SSR
+// 动态导入编辑器组件,跳过 SSR
 const TiptapEditor = dynamic(() => import('@/components/TiptapEditor'), {
   ssr: false,
   loading: () => (
@@ -23,10 +26,53 @@ export default function EditPage() {
   const fileId = params.id as string;
   const { document: fileData, loading, error, saveDocument } = useIDBDocument(fileId);
 
+  // 初始化章节数据
+  const [chapters, setChapters] = useState<Chapter[]>([]);
+  const [currentChapterId, setCurrentChapterId] = useState<string>('1');
+
+  useEffect(() => {
+    if (fileData) {
+      // 如果文档已有章节数据，使用文档的章节
+      if (fileData.chapters && fileData.chapters.length > 0) {
+        setChapters(fileData.chapters);
+        setCurrentChapterId(fileData.currentChapterId || fileData.chapters[0].id);
+      } else {
+        // 否则自动解析章节
+        const parsedChapters = parseChapters(fileData.content || '');
+
+        // 将每个章节的内容转换为HTML格式（保持换行）
+        const chaptersWithHtml = parsedChapters.map(chapter => ({
+          ...chapter,
+          content: contentToHtml(chapter.content)
+        }));
+
+        setChapters(chaptersWithHtml);
+        setCurrentChapterId(chaptersWithHtml[0].id);
+
+        // 保存解析后的章节到数据库
+        saveDocument({
+          chapters: chaptersWithHtml,
+          currentChapterId: chaptersWithHtml[0].id
+        });
+      }
+    }
+  }, [fileData?.id]); // 只在fileData.id变化时执行
+
   const handleContentChange = (newContent: string) => {
     if (!fileData) return;
-    // 使用 IndexedDB Hook 保存内容（防抖）
-    saveDocument({ content: newContent });
+    // 内容变化会通过onChaptersUpdate处理，这里保持向后兼容
+  };
+
+  const handleChaptersUpdate = (updatedChapters: Chapter[]) => {
+    setChapters(updatedChapters);
+    // 保存章节数据到IndexedDB
+    saveDocument({ chapters: updatedChapters });
+  };
+
+  const handleChapterChange = (chapterId: string) => {
+    setCurrentChapterId(chapterId);
+    // 保存当前章节ID到IndexedDB
+    saveDocument({ currentChapterId: chapterId });
   };
 
   const handleBack = () => {
@@ -151,6 +197,10 @@ export default function EditPage() {
           initialContent={fileData.content}
           onChange={handleContentChange}
           fileName={fileData.name}
+          chapters={chapters}
+          currentChapterId={currentChapterId}
+          onChapterChange={handleChapterChange}
+          onChaptersUpdate={handleChaptersUpdate}
         />
       </main>
     </div>

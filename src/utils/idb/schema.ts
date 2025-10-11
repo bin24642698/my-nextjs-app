@@ -1,3 +1,10 @@
+// 章节数据结构
+export interface Chapter {
+  id: string;
+  title: string;
+  content: string;
+}
+
 // IndexedDB 数据库结构定义
 export interface DocumentSchema {
   id: string;
@@ -10,6 +17,8 @@ export interface DocumentSchema {
   updatedAt: number;
   tags?: string[];
   status: 'draft' | 'published';
+  chapters?: Chapter[]; // 新增章节支持
+  currentChapterId?: string; // 当前选中的章节ID
 }
 
 export interface SettingsSchema {

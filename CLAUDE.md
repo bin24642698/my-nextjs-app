@@ -1,6 +1,7 @@
 # rulers
 1.你优先创建和复用组件,不要每次都创建不同的代码.
 2.更新claude.md时候只更新必要的内容和说明,不要添加不必要的废话,如果有功能删减,请把对应的功能说明去掉保持claude.md的准确性.
+3.你尽量复用,调用组件和模块,而不是生成新代码.
 
 # CLAUDE.md
 
@@ -73,6 +74,7 @@ npm run build
 - 📁 文件上传：支持拖拽和点击上传.txt文件，自动检测UTF-8/GBK编码
 - 👀 文件预览：文件卡片显示内容预览（前300字符）
 - ✏️ 富文本编辑：基于Tiptap的现代响应式编辑器
+- 📖 智能章节：自动解析文档章节（第一章、第二章等），左侧导航切换
 - 🗑️ 删除确认：删除文件和清空全部操作都有确认弹窗
 - 💾 本地存储：使用IndexedDB持久化文件数据，防抖自动保存
 - 📱 响应式设计：完整适配桌面/平板/移动端
@@ -169,8 +171,16 @@ my-nextjs-app/
 │   │   ├── globals.css       # 全局样式文件
 │   │   ├── layout.tsx        # 根布局组件
 │   │   └── page.tsx          # 主页组件 (文件上传界面)
-│   └── components/           # 可复用组件目录
-│       └── TiptapEditor.tsx  # Tiptap富文本编辑器组件
+│   ├── components/           # 可复用组件目录
+│   │   └── TiptapEditor.tsx  # Tiptap富文本编辑器组件
+│   ├── hooks/                # React Hooks
+│   │   └── useIDBDocument.ts # IndexedDB文档操作Hook
+│   └── utils/                # 工具函数
+│       ├── chapterParser.ts  # 章节解析工具
+│       └── idb/              # IndexedDB相关工具
+│           ├── schema.ts     # 数据库结构定义
+│           ├── connection.ts # 数据库连接
+│           └── documents.ts  # 文档操作服务
 ├── node_modules/              # 依赖包目录
 ├── .gitignore                # Git 忽略配置
 ├── CLAUDE.md                 # Claude Code 指导文档
@@ -239,6 +249,12 @@ my-nextjs-app/
 ### 文件编辑页面 (src/app/edit/[id]/page.tsx)
 - **动态路由**: 基于文件ID的参数化路由
 - **懒加载编辑器**: 使用 `next/dynamic` 和 `ssr: false` 优化加载
+- **智能章节解析**: 自动识别文档中的章节标记（第一章、第二章、Chapter 1等）
+- **章节管理**:
+  - 自动解析文档章节，无章节时显示为"正文"
+  - 章节内容保持原文格式（换行、段落）
+  - 左侧章节导航栏，点击切换章节
+  - 章节数据持久化到IndexedDB
 - **数据持久化**: 实时保存编辑内容到IndexedDB（防抖500ms）
 - **顶部导航栏**:
   - 返回按钮
@@ -257,9 +273,14 @@ my-nextjs-app/
   - 链接：支持链接添加和编辑
   - 历史操作：撤销、重做
   - 全屏模式：专注写作模式
+- **章节功能**:
+  - 左侧章节导航栏（桌面端≥1024px显示）
+  - 支持多章节切换，当前章节高亮
+  - 章节内容独立保存到IndexedDB
+  - 底部状态栏显示当前章节名称
 - **响应式布局设计**:
-  - 桌面端（≥1024px）：右侧信息面板 + 底部状态栏
-  - 平板端（768px-1023px）：隐藏侧边栏 + 底部状态栏
+  - 桌面端（≥1024px）：左侧章节栏 + 底部状态栏
+  - 平板端（768px-1023px）：隐藏章节栏 + 底部状态栏
   - 移动端（<768px）：顶部信息栏，工具栏自动换行
 - **实时统计**: 字数和字符数实时更新
 - **布局防溢出**:
@@ -267,13 +288,10 @@ my-nextjs-app/
   - 编辑区域 `flex-1 overflow-hidden`
   - 内容区域内部滚动 `overflow-y-auto`
   - 底部状态栏固定不收缩
-- **侧边栏信息面板**（桌面端）:
-  - 文档信息：文件名、字数、字符数
-  - 快捷键提示：常用快捷键说明
 - **内容处理**:
-  - 纯文本到HTML的转换（换行符处理）
+  - HTML格式存储，保持换行和段落格式
   - 实时内容同步到父组件
-  - 初始内容加载和更新
+  - 章节切换时自动加载对应内容
 - **性能优化**:
   - `immediatelyRender: false` 避免SSR问题
   - `shouldRerenderOnTransaction: false` 减少重渲染
@@ -290,6 +308,16 @@ my-nextjs-app/
   "@tiptap/extension-link": "^2.x.x"
 }
 ```
+
+### 章节解析工具 (src/utils/chapterParser.ts)
+- **parseChapters()**: 自动解析文档中的章节标记
+  - 支持格式：第一章、第二章、第1章、第2章、Chapter 1、Chapter 2
+  - 无章节时返回单个"正文"章节
+  - 第一章前有内容时自动添加"序章"
+- **contentToHtml()**: 将纯文本转换为HTML格式
+  - 保持段落和换行结构
+  - 空行转换为 `<p><br></p>`
+- **htmlToContent()**: 将HTML转换回纯文本格式
 
 ## 代码风格
 
