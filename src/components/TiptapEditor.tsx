@@ -113,6 +113,26 @@ export default function TiptapEditor({
     }
   }, [editor, currentChapterId, currentChapter]);
 
+  // 章节切换时重置编辑区域滚动条到顶部
+  useEffect(() => {
+    // 当 currentChapterId 变化时，将 ProseMirror 容器的滚动条重置为顶部
+    // 使用 editor.view.dom 可直接拿到 ProseMirror 根节点，避免 DOM 查询
+    if (!editor) return;
+    const el = editor.view?.dom as HTMLElement | undefined;
+    if (!el) return;
+
+    // 使用 requestAnimationFrame 确保在 setContent 渲染完成后再滚动，避免竞争条件
+    requestAnimationFrame(() => {
+      try {
+        el.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+      } catch {
+        // 兜底：老环境不支持 scrollTo 参数对象时退化
+        el.scrollTop = 0;
+        el.scrollLeft = 0;
+      }
+    });
+  }, [editor, currentChapterId]);
+
   // 处理章节切换
   const handleChapterClick = useCallback((chapterId: string) => {
     if (onChapterChange) {
@@ -359,13 +379,13 @@ export default function TiptapEditor({
                   onClick={() => handleChapterClick(chapter.id)}
                   className={`w-full text-left px-4 py-3 rounded-lg transition-all ${
                     currentChapterId === chapter.id
-                      ? 'bg-dark text-white shadow-md'
+                      ? 'bg-dark text-black shadow-md'
                       : 'bg-white text-secondary hover:bg-light hover:text-primary hover:shadow-sm'
                   }`}
                 >
                   <div className="flex items-center gap-3">
                     <span className={`text-sm font-medium ${
-                      currentChapterId === chapter.id ? 'text-white' : 'text-primary'
+                      currentChapterId === chapter.id ? 'text-black' : 'text-primary'
                     }`}>
                       {chapter.title}
                     </span>

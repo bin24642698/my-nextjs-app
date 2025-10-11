@@ -6,41 +6,41 @@ import type { Chapter } from './idb/schema';
  * - 第一章、第二章、第三章...
  * - 第1章、第2章、第3章...
  * - Chapter 1、Chapter 2...
- * - 1.、2.、3.（标题格式）
  */
 export function parseChapters(content: string): Chapter[] {
   if (!content || content.trim() === '') {
     return [{ id: '1', title: '正文', content: '' }];
   }
 
-  // 章节标题的正则表达式
+  // 章节标题的正则表达式（按优先级排序，更具体的在前面）
   const chapterPatterns = [
-    /^第[一二三四五六七八九十百千\d]+章[\s\S]*?$/gm,
-    /^Chapter\s+\d+[\s\S]*?$/gim,
-    /^第\d+章[\s\S]*?$/gm,
+    /^第[一二三四五六七八九十百千]+章[^\n]*/gm,  // 中文数字章节
+    /^第\d+章[^\n]*/gm,                              // 阿拉伯数字章节
+    /^Chapter\s+\d+[^\n]*/gim,                       // 英文章节
   ];
 
-  let matches: { index: number; title: string; pattern: RegExp }[] = [];
+  const matchesMap = new Map<number, string>(); // 使用 Map 去重，key 是位置，value 是标题
 
   // 查找所有章节标记
   for (const pattern of chapterPatterns) {
     const regex = new RegExp(pattern);
     let match;
-    const tempContent = content;
-    let lastIndex = 0;
 
-    while ((match = regex.exec(tempContent)) !== null) {
-      matches.push({
-        index: match.index,
-        title: match[0].trim(),
-        pattern: pattern
-      });
-      lastIndex = regex.lastIndex;
+    while ((match = regex.exec(content)) !== null) {
+      const index = match.index;
+      const title = match[0].trim();
+
+      // 如果这个位置还没有匹配结果，或者当前匹配更短（更精确），则保存
+      if (!matchesMap.has(index) || title.length < (matchesMap.get(index)?.length || Infinity)) {
+        matchesMap.set(index, title);
+      }
     }
   }
 
-  // 按位置排序
-  matches.sort((a, b) => a.index - b.index);
+  // 转换为数组并按位置排序
+  const matches = Array.from(matchesMap.entries())
+    .map(([index, title]) => ({ index, title }))
+    .sort((a, b) => a.index - b.index);
 
   // 如果没有找到章节标记，返回整个内容作为一章
   if (matches.length === 0) {
