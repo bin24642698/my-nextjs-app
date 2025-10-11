@@ -135,7 +135,7 @@ export default function EditPage() {
   }
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden" style={{backgroundColor: 'var(--primary-bg)'}}>
+    <div className="h-[100dvh] flex flex-col overflow-hidden" style={{backgroundColor: 'var(--primary-bg)'}}>
       {/* 顶部导航栏 */}
       <nav className="bg-white border-b border-light shadow-sm z-20">
         <div className="px-4 sm:px-6 py-3">
@@ -192,7 +192,7 @@ export default function EditPage() {
       </nav>
 
       {/* 编辑器主体 */}
-      <main className="flex-1 overflow-hidden">
+      <main className="flex-1 overflow-hidden min-h-0">
         <TiptapEditor
           initialContent={fileData.content}
           onChange={handleContentChange}

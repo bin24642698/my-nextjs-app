@@ -84,13 +84,14 @@ export default function TiptapEditor({
       setCharCount(text.length);
     },
     editorProps: {
+      // 禁用 ProseMirror 默认的滚动到选区逻辑，避免把整页滚动到最底部
+      handleScrollToSelection: () => true,
       attributes: {
         class: 'focus:outline-none prose prose-sm max-w-none',
         style: `
           color: var(--primary-text);
           font-family: inherit;
           padding: 1.5rem;
-          min-height: 100%;
         `,
       },
     },
@@ -341,7 +342,7 @@ export default function TiptapEditor({
       </div>
 
       {/* 主编辑区域 */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex overflow-hidden min-h-0">
         {/* 左侧章节栏 */}
         <div className="hidden lg:block w-64 border-r border-light bg-light/30 overflow-y-auto flex-shrink-0">
           <div className="p-4">
@@ -389,8 +390,8 @@ export default function TiptapEditor({
         </div>
 
         {/* 编辑器内容区 */}
-        <div className="flex-1 overflow-y-auto bg-white">
-          <div className="max-w-4xl mx-auto">
+        <div className="tiptap-editor flex-1 overflow-hidden bg-white">
+          <div className="max-w-4xl mx-auto h-full">
             <EditorContent editor={editor} />
           </div>
         </div>

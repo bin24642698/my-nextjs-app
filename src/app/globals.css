@@ -60,6 +60,11 @@ body {
   line-height: 1.6;
 }
 
+/* 全局视口高度修正：将 Tailwind 的 h-screen/min-h-screen 改为使用 100dvh，
+   避免 100vh 在不同设备/地址栏变化下导致出现页面级滚动条的情况 */
+.h-screen { height: 100dvh !important; }
+.min-h-screen { min-height: 100dvh !important; }
+
 /* 自定义滚动条 */
 ::-webkit-scrollbar {
   width: 8px;
