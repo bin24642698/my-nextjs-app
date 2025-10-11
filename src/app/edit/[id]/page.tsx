@@ -58,7 +58,7 @@ export default function EditPage() {
     }
   }, [fileData?.id]); // 只在fileData.id变化时执行
 
-  const handleContentChange = (newContent: string) => {
+  const handleContentChange = (_newContent: string) => {
     if (!fileData) return;
     // 内容变化会通过onChaptersUpdate处理，这里保持向后兼容
   };
