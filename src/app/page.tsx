@@ -9,6 +9,12 @@ export default function Home() {
   const router = useRouter();
   const { documents: uploadedFiles, addDocument, deleteDocument, clearAllDocuments } = useIDBDocuments();
   const [isDragOver, setIsDragOver] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<{
+    type: 'single' | 'all';
+    id?: string;
+    fileName?: string;
+  } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // 检测文本编码并转换为UTF-8
@@ -129,22 +135,36 @@ export default function Home() {
     handleFileUpload(e.target.files);
   };
 
-  const deleteFile = async (id: string) => {
+  const requestDeleteFile = (id: string, fileName: string) => {
+    setConfirmAction({ type: 'single', id, fileName });
+    setShowConfirmModal(true);
+  };
+
+  const requestClearAll = () => {
+    setConfirmAction({ type: 'all' });
+    setShowConfirmModal(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!confirmAction) return;
+
     try {
-      await deleteDocument(id);
+      if (confirmAction.type === 'single' && confirmAction.id) {
+        await deleteDocument(confirmAction.id);
+      } else if (confirmAction.type === 'all') {
+        await clearAllDocuments();
+      }
+      setShowConfirmModal(false);
+      setConfirmAction(null);
     } catch (error) {
-      console.error('删除文件失败:', error);
-      alert('删除文件失败');
+      console.error('删除操作失败:', error);
+      alert('删除操作失败');
     }
   };
 
-  const handleClearAll = async () => {
-    try {
-      await clearAllDocuments();
-    } catch (error) {
-      console.error('清空文件失败:', error);
-      alert('清空文件失败');
-    }
+  const handleCancelDelete = () => {
+    setShowConfirmModal(false);
+    setConfirmAction(null);
   };
 
   const handleFileClick = (fileId: string) => {
@@ -198,7 +218,7 @@ export default function Home() {
 
           {uploadedFiles.length > 0 && (
             <button
-              onClick={handleClearAll}
+              onClick={requestClearAll}
               className="btn-secondary px-4 py-2 shadow-lg"
             >
               清空全部
@@ -241,7 +261,7 @@ export default function Home() {
                   <button
                     onClick={(e) => {
                       e.stopPropagation(); // 阻止卡片点击事件
-                      deleteFile(file.id);
+                      requestDeleteFile(file.id, file.name);
                     }}
                     className="absolute top-2 right-2 p-2 text-gray-400 hover:text-red-500 transition-colors z-10"
                     title="删除文件"
@@ -316,6 +336,84 @@ export default function Home() {
           )}
         </div>
       </main>
+
+      {/* 确认删除弹窗 */}
+      {showConfirmModal && (
+        <div
+          className="fixed inset-0 bg-dark/50 flex items-center justify-center z-50 p-4"
+          onClick={handleCancelDelete}
+        >
+          <div
+            className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 transform transition-all"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              animation: 'fadeIn 0.2s ease-out'
+            }}
+          >
+            {/* 图标 */}
+            <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
+              <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+
+            {/* 标题和描述 */}
+            <h3 className="text-xl font-bold text-primary text-center mb-2">
+              {confirmAction?.type === 'single' ? '确认删除文件' : '确认清空全部'}
+            </h3>
+            <p className="text-secondary text-center mb-6">
+              {confirmAction?.type === 'single'
+                ? `确定要删除文件 "${confirmAction.fileName}" 吗？此操作无法撤销。`
+                : `确定要清空所有文件吗？共 ${uploadedFiles.length} 个文件将被删除，此操作无法撤销。`
+              }
+            </p>
+
+            {/* 按钮组 */}
+            <div className="flex space-x-3">
+              <button
+                onClick={handleCancelDelete}
+                className="flex-1 py-3 rounded-lg font-semibold border border-dark transition-all"
+                style={{
+                  color: 'var(--color-dark)',
+                  backgroundColor: 'transparent'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'var(--color-dark)';
+                  e.currentTarget.style.color = '#ffffff';
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                  e.currentTarget.style.color = 'var(--color-dark)';
+                  e.currentTarget.style.transform = 'translateY(0)';
+                }}
+              >
+                取消
+              </button>
+              <button
+                onClick={handleConfirmDelete}
+                className="flex-1 py-3 rounded-lg font-semibold transition-all text-white"
+                style={{
+                  backgroundColor: '#ef4444',
+                  boxShadow: '0 2px 8px rgba(239, 68, 68, 0.3)'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#dc2626';
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(239, 68, 68, 0.4)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = '#ef4444';
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 2px 8px rgba(239, 68, 68, 0.3)';
+                }}
+              >
+                {confirmAction?.type === 'single' ? '删除' : '清空全部'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

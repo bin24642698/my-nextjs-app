@@ -1,8 +1,21 @@
 'use client';
 
 import { useParams, useRouter } from 'next/navigation';
-import TiptapEditor from '@/components/TiptapEditor';
+import dynamic from 'next/dynamic';
 import { useIDBDocument } from '@/hooks/useIDBDocument';
+
+// 动态导入编辑器组件，跳过 SSR
+const TiptapEditor = dynamic(() => import('@/components/TiptapEditor'), {
+  ssr: false,
+  loading: () => (
+    <div className="h-full flex items-center justify-center">
+      <div className="text-center">
+        <div className="w-12 h-12 border-4 border-gray-300 border-t-gray-900 rounded-full animate-spin mx-auto mb-4"></div>
+        <p className="text-secondary">编辑器加载中...</p>
+      </div>
+    </div>
+  ),
+});
 
 export default function EditPage() {
   const params = useParams();
@@ -12,14 +25,8 @@ export default function EditPage() {
 
   const handleContentChange = (newContent: string) => {
     if (!fileData) return;
-
     // 使用 IndexedDB Hook 保存内容（防抖）
     saveDocument({ content: newContent });
-  };
-
-  const handleSave = () => {
-    // 自动保存已通过防抖处理，这里只是提示
-    alert('文件已自动保存到IndexedDB');
   };
 
   const handleBack = () => {
@@ -30,8 +37,8 @@ export default function EditPage() {
     return (
       <div className="h-screen flex items-center justify-center" style={{backgroundColor: 'var(--primary-bg)'}}>
         <div className="text-center">
-          <div className="w-8 h-8 border-4 border-gray-300 border-t-gray-900 rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-secondary">加载中...</p>
+          <div className="w-12 h-12 border-4 border-gray-300 border-t-gray-900 rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-secondary text-lg">加载文档中...</p>
         </div>
       </div>
     );
@@ -41,9 +48,17 @@ export default function EditPage() {
     return (
       <div className="h-screen flex items-center justify-center" style={{backgroundColor: 'var(--primary-bg)'}}>
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-red-600 mb-4">加载失败</h1>
-          <p className="text-secondary mb-4">{error.message}</p>
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <h1 className="text-2xl font-bold text-red-600 mb-2">加载失败</h1>
+          <p className="text-secondary mb-6">{error.message}</p>
           <button onClick={handleBack} className="btn-primary">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
             返回首页
           </button>
         </div>
@@ -55,8 +70,17 @@ export default function EditPage() {
     return (
       <div className="h-screen flex items-center justify-center" style={{backgroundColor: 'var(--primary-bg)'}}>
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-primary mb-4">文件未找到</h1>
+          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+          </div>
+          <h1 className="text-2xl font-bold text-primary mb-2">文件未找到</h1>
+          <p className="text-secondary mb-6">无法找到该文档，可能已被删除</p>
           <button onClick={handleBack} className="btn-primary">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
             返回首页
           </button>
         </div>
@@ -65,47 +89,69 @@ export default function EditPage() {
   }
 
   return (
-    <div className="h-screen overflow-hidden" style={{backgroundColor: 'var(--primary-bg)'}}>
-      {/* 顶部导航 */}
-      <nav className="fixed top-0 left-0 right-0 z-50 backdrop-blur-sm border-b border-light" style={{backgroundColor: 'rgba(251, 249, 244, 0.95)'}}>
-        <div className="container mx-auto px-6 py-4">
+    <div className="h-screen flex flex-col overflow-hidden" style={{backgroundColor: 'var(--primary-bg)'}}>
+      {/* 顶部导航栏 */}
+      <nav className="bg-white border-b border-light shadow-sm z-20">
+        <div className="px-4 sm:px-6 py-3">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-3 flex-1 min-w-0">
               <button
                 onClick={handleBack}
-                className="flex items-center space-x-2 text-secondary hover:text-primary transition-colors"
+                className="flex-shrink-0 p-2 rounded-lg text-secondary hover:text-primary hover:bg-light transition-all"
+                title="返回首页"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
-                <span>返回</span>
               </button>
-              <div className="h-6 w-px bg-border-light"></div>
-              <h1 className="text-xl font-bold text-primary truncate max-w-md" title={fileData.name}>
-                {fileData.name}
-              </h1>
+
+              <div className="h-8 w-px bg-border-light hidden sm:block"></div>
+
+              <div className="flex items-center space-x-2 min-w-0 flex-1">
+                <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </div>
+                <h1 className="text-base sm:text-lg font-semibold text-primary truncate" title={fileData.name}>
+                  {fileData.name}
+                </h1>
+              </div>
             </div>
 
-            <button
-              onClick={handleSave}
-              className="btn-primary px-6 py-2"
-            >
-              保存
-            </button>
+            <div className="flex items-center space-x-2 ml-4">
+              <button
+                onClick={() => alert('文件已自动保存到 IndexedDB')}
+                className="hidden sm:flex btn-primary px-4 py-2 text-sm"
+              >
+                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                已保存
+              </button>
+
+              {/* 移动端保存图标 */}
+              <button
+                onClick={() => alert('文件已自动保存到 IndexedDB')}
+                className="sm:hidden p-2 rounded-lg text-green-600 bg-green-50"
+                title="已自动保存"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
       </nav>
 
-      {/* 主要内容区域 */}
-      <main className="pt-20 pb-6 h-screen overflow-hidden">
-        <div className="container mx-auto px-6 h-full flex flex-col">
-          <div className="card p-6 flex-1 overflow-hidden">
-            <TiptapEditor
-              initialContent={fileData.content}
-              onChange={handleContentChange}
-            />
-          </div>
-        </div>
+      {/* 编辑器主体 */}
+      <main className="flex-1 overflow-hidden">
+        <TiptapEditor
+          initialContent={fileData.content}
+          onChange={handleContentChange}
+          fileName={fileData.name}
+        />
       </main>
     </div>
   );
