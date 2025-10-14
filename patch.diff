@@ -1,0 +1,6 @@
+﻿*** Begin Patch
+*** Update File: src/app/globals.css
+@@
+-  --color-light: #FBF9F4;     /* 米白色 - 主背景色 */
++  --color-light: #ffffff;     /* 纯白色 - 主背景色 */
+*** End Patch
