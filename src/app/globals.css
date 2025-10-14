@@ -659,6 +659,38 @@ body {
   transition: opacity 0.3s ease;
 }
 
+/* 桌面端：在同一图层，占据实际空间 */
+.ai-chat-sidebar-desktop {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  min-width: 300px;
+  max-width: 800px;
+  height: 100%;
+  background: #ffffff;
+  border-left: 1px solid var(--border-light);
+  box-shadow: -4px 0 24px rgba(28, 28, 30, 0.15);
+  position: relative;
+}
+
+/* 移动端：fixed 全屏显示 */
+.ai-chat-sidebar-mobile {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  max-width: 100%;
+  background: #ffffff;
+  box-shadow: -4px 0 24px rgba(28, 28, 30, 0.15);
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  transform: translateX(0);
+  transition: transform 0.3s ease;
+}
+
+/* 旧的 fixed 侧边栏样式（已废弃，保留用于向下兼容） */
 .ai-chat-sidebar {
   position: fixed;
   top: 0;

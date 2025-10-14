@@ -214,25 +214,30 @@ export default function EditPage() {
         </div>
       </nav>
 
-      {/* 编辑器主体 */}
-      <main className="flex-1 overflow-hidden min-h-0">
-        <TiptapEditor
-          initialContent={fileData.content}
-          onChange={handleContentChange}
-          fileName={fileData.name}
-          chapters={chapters}
-          currentChapterId={currentChapterId}
-          onChapterChange={handleChapterChange}
-          onChaptersUpdate={handleChaptersUpdate}
-        />
-      </main>
+      {/* 编辑器和侧边栏容器 */}
+      <main className="flex-1 overflow-hidden min-h-0 flex">
+        {/* 编辑器区域 */}
+        <div className="flex-1 min-w-0 overflow-hidden">
+          <TiptapEditor
+            initialContent={fileData.content}
+            onChange={handleContentChange}
+            fileName={fileData.name}
+            chapters={chapters}
+            currentChapterId={currentChapterId}
+            onChapterChange={handleChapterChange}
+            onChaptersUpdate={handleChaptersUpdate}
+          />
+        </div>
 
-      {/* AI 对话侧边栏 */}
-      <AIChatSidebar
-        isOpen={isAIChatOpen}
-        onClose={() => setIsAIChatOpen(false)}
-        documentContent={fileData.content}
-      />
+        {/* AI 对话侧边栏 */}
+        {isAIChatOpen && (
+          <AIChatSidebar
+            isOpen={isAIChatOpen}
+            onClose={() => setIsAIChatOpen(false)}
+            documentContent={fileData.content}
+          />
+        )}
+      </main>
     </div>
   );
 }
