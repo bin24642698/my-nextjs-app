@@ -1,7 +1,9 @@
 # rulers
 1.你优先创建和复用组件,不要每次都创建不同的代码.
-2.更新claude.md时候只更新必要的内容和说明,不要添加不必要的废话,如果有功能删减,请把对应的功能说明去掉保持claude.md的准确性.
+2.更新claude.md时候只更新必要的内容和说明,不要添加不必要的废话,如果有功能删减,请把对应的功能说明去掉保持claude.md的精简和准确性.
 3.你尽量复用,调用组件和模块,而不是生成新代码.
+4.所有后端的功能,你都必须放到app/api目录中,如登录功能你必须放到app/api/auth/login中,AI功能要放到app/api/AI/API当中,以此类推.
+5.ai url是 https://api.zetatechs.com/v1 key是sk-98TOlWD0szFSdZeyRAtrmgATIbwwM3tI2WgjcFyGnIMYn4me 模型是gemini-2.5-pro-free
 
 # CLAUDE.md
 
@@ -75,6 +77,7 @@ npm run build
 - 👀 文件预览：文件卡片显示内容预览（前300字符）
 - ✏️ 富文本编辑：基于Tiptap的现代响应式编辑器
 - 📖 智能章节：自动解析文档章节（第一章、第二章等），左侧导航切换
+- 🤖 AI 写作助手：右侧侧边栏AI对话功能，支持流式输出，基于文档内容提供智能建议
 - 🗑️ 删除确认：删除文件和清空全部操作都有确认弹窗
 - 💾 本地存储：使用IndexedDB持久化文件数据，防抖自动保存
 - 📱 响应式设计：完整适配桌面/平板/移动端
@@ -164,6 +167,7 @@ my-nextjs-app/
 │   │   ├── api/              # API 路由目录 (所有服务端操作)
 │   │   │   ├── login/        # 登录相关 API
 │   │   │   └── ai/           # AI 相关 API
+│   │   │       └── chat/     # AI 聊天 API (流式响应)
 │   │   ├── edit/             # 文件编辑页面
 │   │   │   └── [id]/         # 动态路由 - 单个文件编辑
 │   │   │       └── page.tsx  # 编辑页面组件
@@ -172,7 +176,8 @@ my-nextjs-app/
 │   │   ├── layout.tsx        # 根布局组件
 │   │   └── page.tsx          # 主页组件 (文件上传界面)
 │   ├── components/           # 可复用组件目录
-│   │   └── TiptapEditor.tsx  # Tiptap富文本编辑器组件
+│   │   ├── TiptapEditor.tsx  # Tiptap富文本编辑器组件
+│   │   └── AIChatSidebar.tsx # AI对话侧边栏组件
 │   ├── hooks/                # React Hooks
 │   │   └── useIDBDocument.ts # IndexedDB文档操作Hook
 │   └── utils/                # 工具函数
@@ -255,10 +260,18 @@ my-nextjs-app/
   - 章节内容保持原文格式（换行、段落）
   - 左侧章节导航栏，点击切换章节
   - 章节数据持久化到IndexedDB
+- **AI 写作助手**:
+  - 右侧侧边栏，点击顶部按钮切换显示/隐藏
+  - 基于当前文档内容提供智能建议
+  - 支持流式输出，实时显示 AI 响应
+  - 自动滚动到最新消息
+  - 清空对话功能
+  - 移动端全屏显示，背景遮罩可关闭
 - **数据持久化**: 实时保存编辑内容到IndexedDB（防抖500ms）
 - **顶部导航栏**:
   - 返回按钮
   - 文件名显示（带图标）
+  - AI 助手开关按钮
   - 保存状态指示
 - **错误处理**: 加载失败、文件未找到的友好提示
 - **加载状态**: 带动画的加载提示
@@ -297,6 +310,38 @@ my-nextjs-app/
   - `shouldRerenderOnTransaction: false` 减少重渲染
   - 懒加载降低首屏加载时间
 - **样式集成**: 完全集成项目的CSS变量系统
+
+### AI 对话侧边栏组件 (src/components/AIChatSidebar.tsx)
+- **流式对话**: 支持 Server-Sent Events (SSE) 流式响应，实时显示 AI 输出
+- **Markdown 渲染**: AI 响应支持 Markdown 格式渲染，包括代码高亮、表格、列表等
+- **上下文感知**: 首次对话自动包含文档内容前2000字作为上下文
+- **消息管理**:
+  - 用户消息和 AI 响应分别显示（不同样式和头像）
+  - 自动滚动到最新消息
+  - 清空对话历史功能
+- **交互优化**:
+  - 支持 Enter 发送，Shift+Enter 换行
+  - 发送中自动禁用输入框和发送按钮
+  - 加载动画提示
+- **可调整宽度**:
+  - 左侧拖拽手柄，支持左右拖拽调整侧边栏宽度
+  - 宽度限制：最小 300px，最大 800px
+  - 宽度自动保存到 localStorage，下次打开时恢复
+  - 拖拽时视觉反馈（高亮、指示器）
+- **响应式设计**:
+  - 桌面端：默认 400px 可调整宽度右侧侧边栏
+  - 移动端：全屏显示，背景遮罩可关闭
+- **样式集成**: 使用项目 CSS 变量系统，与整体设计保持一致
+
+### AI 聊天 API (src/app/api/ai/chat/route.ts)
+- **API 端点**: POST `/api/ai/chat`
+- **流式响应**: 支持 SSE 流式输出，实时传输 AI 生成的内容
+- **AI 配置**:
+  - API: https://api.zetatechs.com/v1
+  - 模型: gemini-2.5-pro-free
+  - Temperature: 0.7, Max Tokens: 2000
+- **错误处理**: 完整的错误捕获和用户友好的错误提示
+- **消息格式**: 支持标准 OpenAI 格式消息数组 (role, content)
 
 ## Tiptap编辑器技术架构
 
