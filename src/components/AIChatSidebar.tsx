@@ -28,6 +28,7 @@ export default function AIChatSidebar({ isOpen, onClose, documentContent }: AICh
   const [isLoading, setIsLoading] = useState(false);
   const [sidebarWidth, setSidebarWidth] = useState(DEFAULT_WIDTH);
   const [isResizing, setIsResizing] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const sidebarRef = useRef<HTMLDivElement>(null);
@@ -48,7 +49,7 @@ export default function AIChatSidebar({ isOpen, onClose, documentContent }: AICh
     }
   }, [isOpen]);
 
-  // 从 localStorage 加载保存的宽度
+  // 从 localStorage 加载保存的宽度，并检测是否为移动端
   useEffect(() => {
     const savedWidth = localStorage.getItem('ai-sidebar-width');
     if (savedWidth) {
@@ -57,6 +58,18 @@ export default function AIChatSidebar({ isOpen, onClose, documentContent }: AICh
         setSidebarWidth(width);
       }
     }
+
+    // 检测是否为移动端
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+
+    return () => {
+      window.removeEventListener('resize', checkMobile);
+    };
   }, []);
 
   // 开始拖拽
@@ -208,10 +221,7 @@ export default function AIChatSidebar({ isOpen, onClose, documentContent }: AICh
 
   if (!isOpen) return null;
 
-  // 桌面端：侧边栏在同一图层，占据实际空间
   // 移动端：全屏显示
-  const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
-
   if (isMobile) {
     return (
       <>
