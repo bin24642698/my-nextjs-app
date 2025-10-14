@@ -20,6 +20,11 @@ const TiptapEditor = dynamic(() => import('@/components/TiptapEditor'), {
   ),
 });
 
+// 动态导入 AI 对话侧边栏组件
+const AIChatSidebar = dynamic(() => import('@/components/AIChatSidebar'), {
+  ssr: false,
+});
+
 export default function EditPage() {
   const params = useParams();
   const router = useRouter();
@@ -29,6 +34,9 @@ export default function EditPage() {
   // 初始化章节数据
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [currentChapterId, setCurrentChapterId] = useState<string>('1');
+
+  // AI 对话侧边栏状态
+  const [isAIChatOpen, setIsAIChatOpen] = useState(false);
 
   useEffect(() => {
     if (fileData) {
@@ -166,6 +174,21 @@ export default function EditPage() {
             </div>
 
             <div className="flex items-center space-x-2 ml-4">
+              {/* AI 助手按钮 */}
+              <button
+                onClick={() => setIsAIChatOpen(!isAIChatOpen)}
+                className={`p-2 rounded-lg transition-all ${
+                  isAIChatOpen
+                    ? 'bg-blue-600 text-white'
+                    : 'text-secondary hover:text-primary hover:bg-light'
+                }`}
+                title={isAIChatOpen ? '关闭 AI 助手' : '打开 AI 助手'}
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                </svg>
+              </button>
+
               <button
                 onClick={() => alert('文件已自动保存到 IndexedDB')}
                 className="hidden sm:flex btn-primary px-4 py-2 text-sm"
@@ -203,6 +226,13 @@ export default function EditPage() {
           onChaptersUpdate={handleChaptersUpdate}
         />
       </main>
+
+      {/* AI 对话侧边栏 */}
+      <AIChatSidebar
+        isOpen={isAIChatOpen}
+        onClose={() => setIsAIChatOpen(false)}
+        documentContent={fileData.content}
+      />
     </div>
   );
 }

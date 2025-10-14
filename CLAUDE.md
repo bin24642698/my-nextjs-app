@@ -336,10 +336,16 @@ my-nextjs-app/
 ### AI 聊天 API (src/app/api/ai/chat/route.ts)
 - **API 端点**: POST `/api/ai/chat`
 - **流式响应**: 支持 SSE 流式输出，实时传输 AI 生成的内容
-- **AI 配置**:
+- **多模型配置系统**:
+  - 支持动态模型选择（通过请求参数 `model` 指定）
+  - 每个模型独立配置 `maxTokens` 和 `temperature`
+  - 当前配置的模型：
+    - `gemini-2.5-pro-free`: 64000 tokens, temperature 0.7
+  - 未配置的模型使用默认值（4096 tokens, temperature 0.7）
+  - 可通过 `MODEL_CONFIGS` 对象轻松添加新模型配置
+- **API 配置**:
   - API: https://api.zetatechs.com/v1
-  - 模型: gemini-2.5-pro-free
-  - Temperature: 0.7, Max Tokens: 2000
+  - 默认模型: gemini-2.5-pro-free
 - **错误处理**: 完整的错误捕获和用户友好的错误提示
 - **消息格式**: 支持标准 OpenAI 格式消息数组 (role, content)
 

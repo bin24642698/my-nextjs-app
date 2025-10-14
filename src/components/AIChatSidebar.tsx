@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
+import rehypeRaw from 'rehype-raw';
 
 interface Message {
   role: 'user' | 'assistant' | 'system';
@@ -307,7 +308,7 @@ export default function AIChatSidebar({ isOpen, onClose, documentContent }: AICh
                       {message.content ? (
                         <ReactMarkdown
                           remarkPlugins={[remarkGfm]}
-                          rehypePlugins={[rehypeHighlight]}
+                          rehypePlugins={[rehypeRaw, rehypeHighlight]}
                           components={{
                             // 自定义代码块样式
                             code: ({ node, inline, className, children, ...props }) => {
