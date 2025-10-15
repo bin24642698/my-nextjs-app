@@ -3,7 +3,7 @@
 2.更新claude.md时候只更新必要的内容和说明,不要添加不必要的废话,如果有功能删减,请把对应的功能说明去掉保持claude.md的精简和准确性.
 3.你尽量复用,调用组件和模块,而不是生成新代码.
 4.所有后端的功能,你都必须放到app/api目录中,如登录功能你必须放到app/api/auth/login中,AI功能要放到app/api/AI/API当中,以此类推.
-5.ai url是 https://api.zetatechs.com/v1 key是sk-98TOlWD0szFSdZeyRAtrmgATIbwwM3tI2WgjcFyGnIMYn4me 模型是gemini-2.5-pro-free
+5.ai url是 http://114.55.8.214:10000/v1 key是sk-bTeyYvmFC9TgCceScubbJof60qmym8uHynEZQ1vaMicoXM24 模型是gemini-2.5-pro
 
 # CLAUDE.md
 
@@ -340,12 +340,12 @@ my-nextjs-app/
   - 支持动态模型选择（通过请求参数 `model` 指定）
   - 每个模型独立配置 `maxTokens` 和 `temperature`
   - 当前配置的模型：
-    - `gemini-2.5-pro-free`: 64000 tokens, temperature 0.7
+    - `gemini-2.5-pro`: 64000 tokens, temperature 0.7
   - 未配置的模型使用默认值（4096 tokens, temperature 0.7）
   - 可通过 `MODEL_CONFIGS` 对象轻松添加新模型配置
 - **API 配置**:
-  - API: https://api.zetatechs.com/v1
-  - 默认模型: gemini-2.5-pro-free
+  - API: http://114.55.8.214:10000/v1
+  - 默认模型: gemini-2.5-pro
 - **错误处理**: 完整的错误捕获和用户友好的错误提示
 - **消息格式**: 支持标准 OpenAI 格式消息数组 (role, content)
 

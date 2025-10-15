@@ -1,17 +1,20 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
-const AI_API_URL = 'https://api.zetatechs.com/v1';
-const AI_API_KEY = 'sk-98TOlWD0szFSdZeyRAtrmgATIbwwM3tI2WgjcFyGnIMYn4me';
-const AI_MODEL = 'gemini-2.5-pro-free';
+const AI_API_URL = 'http://114.55.8.214:10000/v1';
+const AI_API_KEY = 'sk-bTeyYvmFC9TgCceScubbJof60qmym8uHynEZQ1vaMicoXM24';
+const AI_MODEL = 'gemini-2.5-pro';
 
 // 不同模型的配置
 const MODEL_CONFIGS: Record<string, { maxTokens: number; temperature: number }> = {
-  'gemini-2.5-pro-free': {
+  'gemini-2.5-pro': {
     maxTokens: 64000,
     temperature: 0.7,
   },
-  // 可以继续添加其他模型配置
+  'gemini-flash-latest': {
+    maxTokens: 64000,
+    temperature: 0.7,
+  },
 };
 
 interface Message {
@@ -30,11 +33,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 获取模型配置，如果没有配置则使用默认值
-    const modelConfig = MODEL_CONFIGS[model] || {
-      maxTokens: 4096,
-      temperature: 0.7,
-    };
+    // 获取模型配置，如果没有配置则报错
+    const modelConfig = MODEL_CONFIGS[model];
+    if (!modelConfig) {
+      return NextResponse.json(
+        { error: `模型 ${model} 未配置，请在 MODEL_CONFIGS 中添加配置` },
+        { status: 400 }
+      );
+    }
 
     // 调用 AI API
     const response = await fetch(`${AI_API_URL}/chat/completions`, {

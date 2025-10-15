@@ -29,6 +29,7 @@ export default function AIChatSidebar({ isOpen, onClose, documentContent }: AICh
   const [sidebarWidth, setSidebarWidth] = useState(DEFAULT_WIDTH);
   const [isResizing, setIsResizing] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [selectedModel, setSelectedModel] = useState<'gemini-2.5-pro' | 'gemini-flash-latest'>('gemini-2.5-pro');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const sidebarRef = useRef<HTMLDivElement>(null);
@@ -128,7 +129,7 @@ export default function AIChatSidebar({ isOpen, onClose, documentContent }: AICh
       if (documentContent && messages.length === 0) {
         contextMessages.push({
           role: 'system',
-          content: `你是一个写作助手。用户正在编辑以下文档内容：\n\n${documentContent.substring(0, 2000)}${documentContent.length > 2000 ? '...' : ''}`,
+          content: `你是一个写作助手。用户正在编辑以下文档内容：\n\n${documentContent}`,
           timestamp: Date.now(),
         });
       }
@@ -138,7 +139,8 @@ export default function AIChatSidebar({ isOpen, onClose, documentContent }: AICh
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           messages: [...contextMessages, ...messages, userMessage],
-          stream: true,
+          stream: false,
+          model: selectedModel,
         }),
       });
 
@@ -146,54 +148,16 @@ export default function AIChatSidebar({ isOpen, onClose, documentContent }: AICh
         throw new Error('AI 响应失败');
       }
 
-      // 处理流式响应
-      const reader = response.body?.getReader();
-      const decoder = new TextDecoder();
-      let assistantMessage = '';
+      // 处理非流式响应
+      const data = await response.json();
+      const assistantContent = data.choices?.[0]?.message?.content || '无响应内容';
 
-      // 添加占位消息
-      const assistantMessageId = Date.now();
+      // 添加AI响应消息
       setMessages(prev => [...prev, {
         role: 'assistant',
-        content: '',
-        timestamp: assistantMessageId,
+        content: assistantContent,
+        timestamp: Date.now(),
       }]);
-
-      if (reader) {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          const chunk = decoder.decode(value);
-          const lines = chunk.split('\n');
-
-          for (const line of lines) {
-            if (line.startsWith('data: ')) {
-              const data = line.slice(6);
-              if (data === '[DONE]') continue;
-
-              try {
-                const parsed = JSON.parse(data);
-                const content = parsed.choices?.[0]?.delta?.content;
-
-                if (content) {
-                  assistantMessage += content;
-                  // 更新消息内容
-                  setMessages(prev =>
-                    prev.map(msg =>
-                      msg.timestamp === assistantMessageId
-                        ? { ...msg, content: assistantMessage }
-                        : msg
-                    )
-                  );
-                }
-              } catch {
-                // 忽略解析错误
-              }
-            }
-          }
-        }
-      }
     } catch (error) {
       console.error('发送消息失败:', error);
       setMessages(prev => [...prev, {
@@ -266,6 +230,29 @@ export default function AIChatSidebar({ isOpen, onClose, documentContent }: AICh
                 </svg>
               </button>
             </div>
+          </div>
+
+          {/* 模型选择器 */}
+          <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border-light)' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: 'var(--secondary-text)' }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="3" />
+                <path d="M12 1v6m0 6v6" />
+                <path d="m4.93 4.93 4.24 4.24m5.66 5.66 4.24 4.24" />
+                <path d="M1 12h6m6 0h6" />
+                <path d="m4.93 19.07 4.24-4.24m5.66-5.66 4.24-4.24" />
+              </svg>
+              <span>模型：</span>
+              <select
+                value={selectedModel}
+                onChange={(e) => setSelectedModel(e.target.value as 'gemini-2.5-pro' | 'gemini-flash-latest')}
+                className="form-input"
+                style={{ flex: 1, minWidth: 0, padding: '6px 10px', fontSize: '14px' }}
+              >
+                <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+                <option value="gemini-flash-latest">Gemini Flash</option>
+              </select>
+            </label>
           </div>
 
           {/* 消息列表 */}
@@ -421,6 +408,29 @@ export default function AIChatSidebar({ isOpen, onClose, documentContent }: AICh
             </svg>
           </button>
         </div>
+      </div>
+
+      {/* 模型选择器 */}
+      <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border-light)' }}>
+        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: 'var(--secondary-text)' }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <circle cx="12" cy="12" r="3" />
+            <path d="M12 1v6m0 6v6" />
+            <path d="m4.93 4.93 4.24 4.24m5.66 5.66 4.24 4.24" />
+            <path d="M1 12h6m6 0h6" />
+            <path d="m4.93 19.07 4.24-4.24m5.66-5.66 4.24-4.24" />
+          </svg>
+          <span>模型：</span>
+          <select
+            value={selectedModel}
+            onChange={(e) => setSelectedModel(e.target.value as 'gemini-2.5-pro' | 'gemini-flash-latest')}
+            className="form-input"
+            style={{ flex: 1, minWidth: 0, padding: '6px 10px', fontSize: '14px' }}
+          >
+            <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+            <option value="gemini-flash-latest">Gemini Flash</option>
+          </select>
+        </label>
       </div>
 
       {/* 消息列表 */}
