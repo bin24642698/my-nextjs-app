@@ -248,7 +248,6 @@ export default function EditPage() {
           <AIChatSidebar
             isOpen={isAIChatOpen}
             onClose={() => setIsAIChatOpen(false)}
-            documentContent={fileData.content}
           />
         )}
       </main>

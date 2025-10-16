@@ -15,14 +15,13 @@ interface Message {
 interface AIChatSidebarProps {
   isOpen: boolean;
   onClose: () => void;
-  documentContent?: string;
 }
 
 const MIN_WIDTH = 300;
 const MAX_WIDTH = 800;
 const DEFAULT_WIDTH = 400;
 
-export default function AIChatSidebar({ isOpen, onClose, documentContent }: AIChatSidebarProps) {
+export default function AIChatSidebar({ isOpen, onClose }: AIChatSidebarProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
