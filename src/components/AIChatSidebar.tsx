@@ -123,16 +123,8 @@ export default function AIChatSidebar({ isOpen, onClose, documentContent }: AICh
     setIsLoading(true);
 
     try {
-      // 构建消息上下文（包含文档内容）
+      // 纯对话模式：不再自动注入文档内容到上下文
       const contextMessages: Message[] = [];
-
-      if (documentContent && messages.length === 0) {
-        contextMessages.push({
-          role: 'system',
-          content: `你是一个写作助手。用户正在编辑以下文档内容：\n\n${documentContent}`,
-          timestamp: Date.now(),
-        });
-      }
 
       const response = await fetch('/api/ai/chat', {
         method: 'POST',
