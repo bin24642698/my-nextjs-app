@@ -69,15 +69,16 @@ export async function POST(request: NextRequest) {
           // 如果返回非 2xx，第一次失败则重试一次，不读取 body 以避免消耗流
           lastError = { status: res.status };
           if (attempt < 2) {
-            // 可选：轻微等待以避开瞬时错误（不阻塞太久）
-            await new Promise((r) => setTimeout(r, 150));
+            // 等待 1 秒后重试，规避瞬时错误
+            await new Promise((r) => setTimeout(r, 1000));
             continue;
           }
           return res; // 第二次依然非 2xx，交由后续统一错误处理
         } catch (err) {
           lastError = err;
           if (attempt < 2) {
-            await new Promise((r) => setTimeout(r, 150));
+            // 等待 1 秒后重试
+            await new Promise((r) => setTimeout(r, 1000));
             continue;
           }
           throw err; // 第二次仍抛错，向外抛出，由外层捕获并返回 500
