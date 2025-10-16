@@ -43,21 +43,52 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 调用 AI API
-    const response = await fetch(`${AI_API_URL}/chat/completions`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${AI_API_KEY}`,
-      },
-      body: JSON.stringify({
+    // 封装：对上游 AI 请求增加一次自动重试（最多两次）
+    const fetchWithRetry = async (): Promise<Response> => {
+      const payload = JSON.stringify({
         model: model,
         messages: messages as Message[],
         stream: stream,
         temperature: modelConfig.temperature,
         max_tokens: modelConfig.maxTokens,
-      }),
-    });
+      });
+
+      let lastError: unknown = null;
+      for (let attempt = 1; attempt <= 2; attempt++) {
+        try {
+          const res = await fetch(`${AI_API_URL}/chat/completions`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${AI_API_KEY}`,
+            },
+            body: payload,
+          });
+          if (res.ok) return res;
+
+          // 如果返回非 2xx，第一次失败则重试一次，不读取 body 以避免消耗流
+          lastError = { status: res.status };
+          if (attempt < 2) {
+            // 可选：轻微等待以避开瞬时错误（不阻塞太久）
+            await new Promise((r) => setTimeout(r, 150));
+            continue;
+          }
+          return res; // 第二次依然非 2xx，交由后续统一错误处理
+        } catch (err) {
+          lastError = err;
+          if (attempt < 2) {
+            await new Promise((r) => setTimeout(r, 150));
+            continue;
+          }
+          throw err; // 第二次仍抛错，向外抛出，由外层捕获并返回 500
+        }
+      }
+      // 理论上不会到这里，兜底抛错
+      throw lastError ?? new Error('未知错误：AI 请求失败');
+    };
+
+    // 调用 AI API（带自动重试）
+    const response = await fetchWithRetry();
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
