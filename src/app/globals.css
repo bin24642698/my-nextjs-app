@@ -374,6 +374,9 @@ body {
   resize: none;
   border: none;
   background: transparent;
+  /* 保证滚动容器在叠放顺序上可接收滚动事件 */
+  position: relative;
+  z-index: 1;
 }
 
 /* 强制显示滚动条，即使内容不超过容器高度 */
@@ -397,6 +400,62 @@ body {
 
 .tiptap-editor .ProseMirror::-webkit-scrollbar-thumb:hover {
   background: #a8a8a8 !important;
+}
+
+/* 行号样式：在编辑器左侧显示“按回车分段”的行号 */
+.pm-line-numbers {
+  /* 行号栏宽度可按需调整 */
+  --pm-gutter-width: 2.5rem;
+  position: relative;
+}
+
+.pm-line-numbers .ProseMirror {
+  /* 从 1 开始计数行号 */
+  counter-reset: pm-line;
+  /* 为行号预留左侧空间（在原有内边距基础上增加） */
+  padding-left: calc(1.5rem + var(--pm-gutter-width));
+}
+
+/* 将所有常见块级节点视为一行（按回车分段） */
+.pm-line-numbers .ProseMirror p,
+.pm-line-numbers .ProseMirror h1,
+.pm-line-numbers .ProseMirror h2,
+.pm-line-numbers .ProseMirror h3,
+.pm-line-numbers .ProseMirror h4,
+.pm-line-numbers .ProseMirror h5,
+.pm-line-numbers .ProseMirror h6,
+.pm-line-numbers .ProseMirror pre,
+.pm-line-numbers .ProseMirror blockquote,
+.pm-line-numbers .ProseMirror li {
+  position: relative;
+}
+
+/* 在每个块级节点前渲染行号 */
+.pm-line-numbers .ProseMirror p::before,
+.pm-line-numbers .ProseMirror h1::before,
+.pm-line-numbers .ProseMirror h2::before,
+.pm-line-numbers .ProseMirror h3::before,
+.pm-line-numbers .ProseMirror h4::before,
+.pm-line-numbers .ProseMirror h5::before,
+.pm-line-numbers .ProseMirror h6::before,
+.pm-line-numbers .ProseMirror pre::before,
+.pm-line-numbers .ProseMirror blockquote::before,
+.pm-line-numbers .ProseMirror li::before {
+  counter-increment: pm-line;
+  content: counter(pm-line);
+  position: absolute;
+  left: calc(-1 * var(--pm-gutter-width));
+  width: var(--pm-gutter-width);
+  text-align: right;
+  color: var(--muted-text);
+  opacity: 0.8;
+  padding-right: 0.5rem;
+  user-select: none;
+  /* 行号仅用于显示，不拦截鼠标/滚轮事件，避免影响滚动 */
+  pointer-events: none;
+  /* 让行号与正文顶部对齐更自然 */
+  transform: translateY(2px);
+  box-sizing: border-box;
 }
 
 .tiptap-editor .ProseMirror::-webkit-scrollbar-corner {
