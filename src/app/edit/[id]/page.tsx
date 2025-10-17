@@ -161,7 +161,7 @@ export default function EditPage() {
 
               <div className="h-8 w-px bg-border-light hidden sm:block"></div>
 
-              <div className="flex items-center space-x-2 min-w-0 flex-1">
+              <div className="flex items-center space-x-2 min-w-0">
                 <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
                   <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -171,47 +171,65 @@ export default function EditPage() {
                   {fileData.name}
                 </h1>
               </div>
+
+              <div className="h-8 w-px bg-border-light hidden sm:block mx-2"></div>
+
+              {/* 通用功能按钮区（左侧） */}
+              <div className="hidden sm:flex items-center space-x-3">
+                {/* 提示词库按钮 */}
+                <button
+                  onClick={() => router.push('/prompts')}
+                  className="px-4 py-2 rounded-lg text-base font-bold text-primary hover:text-blue-600 hover:bg-light transition-all flex items-center space-x-2"
+                  title="提示词库"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  <span>提示词库</span>
+                </button>
+
+                {/* 画布工作流按钮 */}
+                <button
+                  onClick={() => router.push('/workflow')}
+                  className="px-4 py-2 rounded-lg text-base font-bold text-primary hover:text-blue-600 hover:bg-light transition-all flex items-center space-x-2"
+                  title="画布工作流"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 16a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-3zM14 16a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1h-4a1 1 0 01-1-1v-3z" />
+                  </svg>
+                  <span>画布工作流</span>
+                </button>
+              </div>
             </div>
 
+            {/* 右侧按钮区（AI助手和保存状态） */}
             <div className="flex items-center space-x-2 ml-4">
-              {/* 提示词管理按钮 - 桌面端 */}
+              {/* AI 助手按钮 - 桌面端 */}
               <button
-                onClick={() => router.push('/prompts')}
-                className="hidden sm:flex btn-primary px-4 py-2 text-sm"
-                title="提示词管理"
+                onClick={() => setIsAIChatOpen(!isAIChatOpen)}
+                className={`hidden sm:flex btn-primary px-4 py-2 text-sm ${
+                  isAIChatOpen ? 'opacity-80' : ''
+                }`}
+                title={isAIChatOpen ? '关闭 AI 助手' : '打开 AI 助手'}
               >
                 <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
                 </svg>
-                提示词库
+                AI助手
               </button>
 
-              {/* 提示词管理按钮 - 移动端 */}
+              {/* 提示词库按钮 - 移动端（因为左侧区域在移动端隐藏） */}
               <button
                 onClick={() => router.push('/prompts')}
                 className="sm:hidden p-2 rounded-lg text-secondary hover:text-primary hover:bg-light transition-all"
-                title="提示词管理"
+                title="提示词库"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
               </button>
 
-              {/* AI 功能按钮 - 桌面端 */}
-              <button
-                onClick={() => setIsAIChatOpen(!isAIChatOpen)}
-                className={`hidden sm:flex btn-primary px-4 py-2 text-sm ${
-                  isAIChatOpen ? 'opacity-80' : ''
-                }`}
-                title={isAIChatOpen ? '关闭 AI 功能' : '打开 AI 功能'}
-              >
-                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-                </svg>
-                AI功能
-              </button>
-
-              {/* AI 功能按钮 - 移动端 */}
+              {/* AI 助手按钮 - 移动端 */}
               <button
                 onClick={() => setIsAIChatOpen(!isAIChatOpen)}
                 className={`sm:hidden p-2 rounded-lg transition-all ${
@@ -219,13 +237,14 @@ export default function EditPage() {
                     ? 'bg-blue-600 text-white'
                     : 'text-secondary hover:text-primary hover:bg-light'
                 }`}
-                title={isAIChatOpen ? '关闭 AI 功能' : '打开 AI 功能'}
+                title={isAIChatOpen ? '关闭 AI 助手' : '打开 AI 助手'}
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
                 </svg>
               </button>
 
+              {/* 保存状态按钮 - 桌面端 */}
               <button
                 onClick={() => alert('文件已自动保存到 IndexedDB')}
                 className="hidden sm:flex btn-primary px-4 py-2 text-sm"
@@ -236,7 +255,7 @@ export default function EditPage() {
                 已保存
               </button>
 
-              {/* 移动端保存图标 */}
+              {/* 保存状态按钮 - 移动端 */}
               <button
                 onClick={() => alert('文件已自动保存到 IndexedDB')}
                 className="sm:hidden p-2 rounded-lg text-green-600 bg-green-50"

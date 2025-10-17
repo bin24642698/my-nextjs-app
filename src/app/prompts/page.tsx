@@ -1,12 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import GlobalNav from '@/components/GlobalNav';
 import { SystemPromptService } from '@/utils/idb/systemPrompts';
 import type { SystemPromptSchema } from '@/utils/idb/schema';
 
 export default function PromptsPage() {
-  const router = useRouter();
   const [prompts, setPrompts] = useState<SystemPromptSchema[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -107,34 +106,22 @@ export default function PromptsPage() {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--primary-bg)' }}>
-      {/* 顶部导航栏 */}
-      <nav className="bg-white border-b border-light shadow-sm">
-        <div className="px-4 sm:px-6 py-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <button
-                onClick={() => router.back()}
-                className="p-2 rounded-lg text-secondary hover:text-primary hover:bg-light transition-all"
-                title="返回"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-              </button>
-              <h1 className="text-xl font-bold text-primary">提示词管理</h1>
-            </div>
-            <button
-              onClick={() => handleOpenModal()}
-              className="btn-primary px-4 py-2 text-sm"
-            >
-              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-              新建提示词
-            </button>
-          </div>
-        </div>
-      </nav>
+      {/* 全局导航栏 */}
+      <GlobalNav
+        title="提示词管理"
+        showBackButton={true}
+        rightContent={
+          <button
+            onClick={() => handleOpenModal()}
+            className="btn-primary px-4 py-2 text-sm"
+          >
+            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            新建提示词
+          </button>
+        }
+      />
 
       {/* 内容区域 */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
