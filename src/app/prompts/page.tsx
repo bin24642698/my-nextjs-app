@@ -154,12 +154,16 @@ export default function PromptsPage() {
             <p className="text-secondary mb-6">点击右上角按钮创建您的第一个提示词卡片</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {prompts.map((prompt) => (
-              <div key={prompt.id} className="card p-6">
-                <div className="flex items-start justify-between mb-3">
-                  <h3 className="text-lg font-semibold text-primary flex-1 mr-2">{prompt.title}</h3>
-                  <div className="flex items-center space-x-2">
+              <div
+                key={prompt.id}
+                className="card p-6 flex flex-col"
+                style={{ width: '320px', height: '320px' }}
+              >
+                <div className="flex items-start justify-between mb-3 flex-shrink-0">
+                  <h3 className="text-lg font-semibold text-primary flex-1 mr-2 line-clamp-2">{prompt.title}</h3>
+                  <div className="flex items-center space-x-2 flex-shrink-0">
                     <button
                       onClick={() => handleOpenModal(prompt)}
                       className="p-1.5 rounded-lg text-secondary hover:text-blue-600 hover:bg-blue-50 transition-all"
@@ -182,18 +186,18 @@ export default function PromptsPage() {
                 </div>
 
                 {prompt.description && (
-                  <p className="text-secondary text-sm mb-3">{prompt.description}</p>
+                  <p className="text-secondary text-sm mb-3 line-clamp-2 flex-shrink-0">{prompt.description}</p>
                 )}
 
-                <div className="bg-gray-50 rounded-lg p-3 mb-3">
-                  <p className="text-sm text-secondary line-clamp-4 whitespace-pre-wrap">{prompt.content}</p>
+                <div className="bg-gray-50 rounded-lg p-3 mb-3 flex-1 overflow-hidden">
+                  <p className="text-sm text-secondary line-clamp-6 whitespace-pre-wrap">{prompt.content}</p>
                 </div>
 
-                <div className="flex items-center justify-between text-xs text-muted">
+                <div className="flex items-center justify-between text-xs text-muted flex-shrink-0">
                   {prompt.category && (
-                    <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded">{prompt.category}</span>
+                    <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded truncate max-w-[150px]">{prompt.category}</span>
                   )}
-                  <span>{new Date(prompt.updatedAt).toLocaleDateString()}</span>
+                  <span className="flex-shrink-0">{new Date(prompt.updatedAt).toLocaleDateString()}</span>
                 </div>
               </div>
             ))}
