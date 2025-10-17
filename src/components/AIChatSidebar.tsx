@@ -34,6 +34,8 @@ export default function AIChatSidebar({ isOpen, onClose }: AIChatSidebarProps) {
   const [selectedModel, setSelectedModel] = useState<'gemini-2.5-pro' | 'gemini-flash-latest'>('gemini-2.5-pro');
   // 中文说明：正在重试的消息下标（仅 assistant 用），用于展示加载状态
   const [retryingIndex, setRetryingIndex] = useState<number | null>(null);
+  // 中文说明：确认弹窗状态（删除或重试）
+  const [confirmModal, setConfirmModal] = useState<null | { type: 'retry' | 'delete'; index: number }>(null);
   // 中文说明：是否显示设置面板
   const [showSettings, setShowSettings] = useState(false);
   // 中文说明：保存按钮的"已保存"提示状态
@@ -219,6 +221,11 @@ export default function AIChatSidebar({ isOpen, onClose }: AIChatSidebarProps) {
     }
   };
 
+  // 中文说明：删除指定下标消息
+  const deleteMessageAt = (index: number) => {
+    setMessages(prev => prev.filter((_, i) => i !== index));
+  };
+
   // 中文说明：重试指定下标的助手回复（将使用其上一条用户消息作为重试目标）
   const retryAssistantAt = async (targetIndex: number) => {
     // 防御：只有助手消息可重试
@@ -284,6 +291,55 @@ export default function AIChatSidebar({ isOpen, onClose }: AIChatSidebarProps) {
     } catch {
       // 降级：不提示，避免打扰；如需可改为 alert
     }
+  };
+
+  // 中文说明：渲染通用确认弹窗（用于删除/重试）
+  const renderConfirmModal = () => {
+    if (!confirmModal) return null;
+    const isRetry = confirmModal.type === 'retry';
+    const title = isRetry ? '确认重试' : '确认删除';
+    const desc = isRetry ? '确定要重试该条助手消息吗？' : '确定要删除该条消息吗？此操作不可撤销。';
+    const handleConfirm = async () => {
+      const idx = confirmModal.index;
+      setConfirmModal(null);
+      if (isRetry) {
+        // 仅允许对助手消息重试
+        if (messages[idx]?.role !== 'assistant') {
+          alert('只能重试助手消息');
+          return;
+        }
+        await retryAssistantAt(idx);
+      } else {
+        deleteMessageAt(idx);
+      }
+    };
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
+        <div className="bg-white rounded-lg shadow-xl w-full max-w-md overflow-hidden">
+          <div className="px-6 py-4 border-b border-light">
+            <h2 className="text-lg font-bold text-primary">{title}</h2>
+          </div>
+          <div className="px-6 py-4">
+            <p className="text-secondary text-sm">{desc}</p>
+          </div>
+          <div className="px-6 py-3 border-t border-light flex items-center justify-end gap-3">
+            <button
+              onClick={() => setConfirmModal(null)}
+              className="px-4 py-2 rounded-lg text-secondary hover:text-primary hover:bg-light transition-all"
+            >
+              取消
+            </button>
+            <button
+              onClick={handleConfirm}
+              className={`px-4 py-2 rounded-lg text-white ${isRetry ? '' : ''}`}
+              style={{ backgroundColor: isRetry ? '#2563eb' : '#ef4444' }}
+            >
+              确认
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   // 处理键盘事件
@@ -479,7 +535,7 @@ export default function AIChatSidebar({ isOpen, onClose }: AIChatSidebarProps) {
                       </div>
                     )}
                   </div>
-                  {/* 中文说明：消息气泡下方功能区（复制 + 重试）*/}
+                  {/* 中文说明：消息气泡下方功能区（复制 / 重试 / 删除）*/}
                   <div className="mt-1 flex items-center gap-3 text-xs text-secondary">
                     <button
                       onClick={() => copyMessageAt(idx)}
@@ -490,7 +546,7 @@ export default function AIChatSidebar({ isOpen, onClose }: AIChatSidebarProps) {
                     </button>
                     {message.role === 'assistant' && (
                       <button
-                        onClick={() => retryAssistantAt(idx)}
+                        onClick={() => setConfirmModal({ type: 'retry', index: idx })}
                         disabled={isLoading}
                         className={`px-2 py-1 rounded transition-colors ${isLoading ? 'opacity-60 cursor-not-allowed' : 'hover:text-blue-600 hover:bg-light'}`}
                         title="重试"
@@ -498,6 +554,14 @@ export default function AIChatSidebar({ isOpen, onClose }: AIChatSidebarProps) {
                         重试
                       </button>
                     )}
+                    <button
+                      onClick={() => setConfirmModal({ type: 'delete', index: idx })}
+                      disabled={isLoading}
+                      className={`px-2 py-1 rounded transition-colors ${isLoading ? 'opacity-60 cursor-not-allowed' : 'hover:text-red-600 hover:bg-red-50'}`}
+                      title="删除"
+                    >
+                      删除
+                    </button>
                   </div>
                 </div>
               ))
@@ -537,6 +601,7 @@ export default function AIChatSidebar({ isOpen, onClose }: AIChatSidebarProps) {
             </button>
           </div>
         </div>
+      {renderConfirmModal()}
       </>
     );
   }
@@ -718,7 +783,7 @@ export default function AIChatSidebar({ isOpen, onClose }: AIChatSidebarProps) {
                   </div>
                 )}
               </div>
-              {/* 中文说明：消息气泡下方功能区（复制 + 重试）*/}
+              {/* 中文说明：消息气泡下方功能区（复制 / 重试 / 删除）*/}
               <div className="mt-1 flex items-center gap-3 text-xs text-secondary">
                 <button
                   onClick={() => copyMessageAt(idx)}
@@ -729,7 +794,7 @@ export default function AIChatSidebar({ isOpen, onClose }: AIChatSidebarProps) {
                 </button>
                 {message.role === 'assistant' && (
                   <button
-                    onClick={() => retryAssistantAt(idx)}
+                    onClick={() => setConfirmModal({ type: 'retry', index: idx })}
                     disabled={isLoading}
                     className={`px-2 py-1 rounded transition-colors ${isLoading ? 'opacity-60 cursor-not-allowed' : 'hover:text-blue-600 hover:bg-light'}`}
                     title="重试"
@@ -737,10 +802,19 @@ export default function AIChatSidebar({ isOpen, onClose }: AIChatSidebarProps) {
                     重试
                   </button>
                 )}
+                <button
+                  onClick={() => setConfirmModal({ type: 'delete', index: idx })}
+                  disabled={isLoading}
+                  className={`px-2 py-1 rounded transition-colors ${isLoading ? 'opacity-60 cursor-not-allowed' : 'hover:text-red-600 hover:bg-red-50'}`}
+                  title="删除"
+                >
+                  删除
+                </button>
               </div>
             </div>
           ))
         )}
+        {renderConfirmModal()}
         <div ref={messagesEndRef} />
       </div>
 
