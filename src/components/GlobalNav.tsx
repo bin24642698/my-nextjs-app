@@ -7,17 +7,21 @@ interface GlobalNavProps {
   title?: string;
   showBackButton?: boolean;
   rightContent?: React.ReactNode;
+  // 是否使用 sticky 使顶栏始终可见
+  sticky?: boolean;
 }
 
-export default function GlobalNav({ title = '文档编辑平台', showBackButton = false, rightContent }: GlobalNavProps) {
+export default function GlobalNav({ title = '文档编辑平台', showBackButton = false, rightContent, sticky = false }: GlobalNavProps) {
   const router = useRouter();
   const pathname = usePathname();
   // 移动端菜单开关
   const [mobileOpen, setMobileOpen] = useState(false);
 
+  const navClassName = `bg-white border-b border-light shadow-sm z-20 ${sticky ? 'sticky top-0' : ''}`;
+
   return (
     <>
-    <nav className="bg-white border-b border-light shadow-sm z-20">
+    <nav className={navClassName}>
       <div className="px-4 sm:px-6 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3 flex-1 min-w-0">
