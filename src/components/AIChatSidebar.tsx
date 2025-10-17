@@ -493,6 +493,19 @@ export default function AIChatSidebar({ isOpen, onClose, chapters = [], currentC
                   </svg>
                 </button>
               )}
+              {/* 中文说明：关联章节按钮（移动端头部，位于设置按钮左侧） */}
+              <button
+                onClick={() => setShowAssociateModal(true)}
+                className="ai-chat-icon-btn"
+                title="关联章节"
+                disabled={chapters.length === 0}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M10 13a5 5 0 0 1 7 7l-1.5 1.5" />
+                  <path d="M14 11a5 5 0 0 0-7-7L5.5 5.5" />
+                  <path d="M8.5 15.5 5.5 18.5a5 5 0 0 0 7 7l3-3" />
+                </svg>
+              </button>
               <button
                 onClick={() => setShowSettings((s) => !s)}
                 className="ai-chat-icon-btn"
@@ -757,6 +770,19 @@ export default function AIChatSidebar({ isOpen, onClose, chapters = [], currentC
               </svg>
             </button>
           )}
+          {/* 中文说明：关联章节按钮（桌面端头部，位于设置按钮左侧） */}
+          <button
+            onClick={() => setShowAssociateModal(true)}
+            className="ai-chat-icon-btn"
+            title="关联章节"
+            disabled={chapters.length === 0}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M10 13a5 5 0 0 1 7 7l-1.5 1.5" />
+              <path d="M14 11a5 5 0 0 0-7-7L5.5 5.5" />
+              <path d="M8.5 15.5 5.5 18.5a5 5 0 0 0 7 7l3-3" />
+            </svg>
+          </button>
           <button
             onClick={() => setShowSettings((s) => !s)}
             className="ai-chat-icon-btn"
@@ -960,19 +986,7 @@ export default function AIChatSidebar({ isOpen, onClose, chapters = [], currentC
           rows={1}
           disabled={isLoading}
         />
-        {/* 中文说明：关联章节按钮（移动端） */}
-        <button
-          onClick={() => setShowAssociateModal(true)}
-          className="ai-chat-action-btn"
-          title="关联章节"
-          disabled={chapters.length === 0}
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M10 13a5 5 0 0 1 7 7l-1.5 1.5" />
-            <path d="M14 11a5 5 0 0 0-7-7L5.5 5.5" />
-            <path d="M8.5 15.5 5.5 18.5a5 5 0 0 0 7 7l3-3" />
-          </svg>
-        </button>
+        
         <button
           onClick={sendMessage}
           disabled={!input.trim() || isLoading}
