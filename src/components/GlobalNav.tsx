@@ -16,6 +16,7 @@ export default function GlobalNav({ title = '文档编辑平台', showBackButton
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
+    <>
     <nav className="bg-white border-b border-light shadow-sm z-20">
       <div className="px-4 sm:px-6 py-3">
         <div className="flex items-center justify-between">
@@ -164,5 +165,6 @@ export default function GlobalNav({ title = '文档编辑平台', showBackButton
         </div>
       </div>
     )}
+    </>
   );
 }
