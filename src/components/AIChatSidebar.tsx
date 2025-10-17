@@ -32,6 +32,8 @@ export default function AIChatSidebar({ isOpen, onClose }: AIChatSidebarProps) {
   const [isResizing, setIsResizing] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [selectedModel, setSelectedModel] = useState<'gemini-2.5-pro' | 'gemini-flash-latest'>('gemini-2.5-pro');
+  // 中文说明：正在重试的消息下标（仅 assistant 用），用于展示加载状态
+  const [retryingIndex, setRetryingIndex] = useState<number | null>(null);
   // 中文说明：是否显示设置面板
   const [showSettings, setShowSettings] = useState(false);
   // 中文说明：保存按钮的"已保存"提示状态
@@ -217,6 +219,73 @@ export default function AIChatSidebar({ isOpen, onClose }: AIChatSidebarProps) {
     }
   };
 
+  // 中文说明：重试指定下标的助手回复（将使用其上一条用户消息作为重试目标）
+  const retryAssistantAt = async (targetIndex: number) => {
+    // 防御：只有助手消息可重试
+    if (messages[targetIndex]?.role !== 'assistant' || isLoading) return;
+
+    // 向前查找与之配对的上一条用户消息
+    let userIndex = -1;
+    for (let i = targetIndex - 1; i >= 0; i--) {
+      if (messages[i].role === 'user') { userIndex = i; break; }
+    }
+    if (userIndex === -1) {
+      alert('未找到对应的用户消息，无法重试');
+      return;
+    }
+
+    setIsLoading(true);
+    setRetryingIndex(targetIndex);
+
+    try {
+      const systemMsg: Message[] = systemPrompt && systemPrompt.trim()
+        ? [{ role: 'system', content: systemPrompt.trim(), timestamp: Date.now() }]
+        : [];
+
+      // 上下文取到用户消息为止（包含该用户消息，不包含当前助手及之后的消息）
+      const context = messages.slice(0, userIndex + 1);
+
+      const response = await fetch('/api/ai/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: [...systemMsg, ...context],
+          stream: false,
+          model: selectedModel,
+        }),
+      });
+
+      if (!response.ok) throw new Error('AI 响应失败');
+
+      const data = await response.json();
+      const assistantContent = data.choices?.[0]?.message?.content || '无响应内容';
+
+      // 原地替换目标助手消息内容
+      setMessages(prev => prev.map((m, idx) => (
+        idx === targetIndex ? { ...m, content: assistantContent, timestamp: Date.now() } : m
+      )));
+    } catch (error) {
+      console.error('重试失败:', error);
+      setMessages(prev => prev.map((m, idx) => (
+        idx === targetIndex ? { ...m, content: '抱歉，重试失败，请稍后再试。' } : m
+      )));
+    } finally {
+      setIsLoading(false);
+      setRetryingIndex(null);
+    }
+  };
+
+  // 中文说明：复制指定下标消息内容到剪贴板
+  const copyMessageAt = async (index: number) => {
+    const text = messages[index]?.content || '';
+    if (!text) return;
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      // 降级：不提示，避免打扰；如需可改为 alert
+    }
+  };
+
   // 处理键盘事件
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -357,7 +426,7 @@ export default function AIChatSidebar({ isOpen, onClose }: AIChatSidebarProps) {
                 <p className="text-secondary">有什么可以帮助你的吗？</p>
               </div>
             ) : (
-              messages.map((message) => (
+              messages.map((message, idx) => (
                 <div
                   key={message.timestamp}
                   className={`ai-chat-message ${message.role === 'user' ? 'ai-chat-message-user' : 'ai-chat-message-assistant'}`}
@@ -402,12 +471,32 @@ export default function AIChatSidebar({ isOpen, onClose }: AIChatSidebarProps) {
                               },
                             }}
                           >
-                            {message.content}
+                            {retryingIndex === idx ? '重试中...' : message.content}
                           </ReactMarkdown>
                         ) : (
                           <div className="ai-chat-message-text">...</div>
                         )}
                       </div>
+                    )}
+                  </div>
+                  {/* 中文说明：消息气泡下方功能区（复制 + 重试）*/}
+                  <div className="mt-1 flex items-center gap-3 text-xs text-secondary">
+                    <button
+                      onClick={() => copyMessageAt(idx)}
+                      className="px-2 py-1 rounded hover:text-blue-600 hover:bg-light transition-colors"
+                      title="复制"
+                    >
+                      复制
+                    </button>
+                    {message.role === 'assistant' && (
+                      <button
+                        onClick={() => retryAssistantAt(idx)}
+                        disabled={isLoading}
+                        className={`px-2 py-1 rounded transition-colors ${isLoading ? 'opacity-60 cursor-not-allowed' : 'hover:text-blue-600 hover:bg-light'}`}
+                        title="重试"
+                      >
+                        重试
+                      </button>
                     )}
                   </div>
                 </div>
@@ -576,7 +665,7 @@ export default function AIChatSidebar({ isOpen, onClose }: AIChatSidebarProps) {
             <p className="text-secondary">有什么可以帮助你的吗？</p>
           </div>
         ) : (
-          messages.map((message) => (
+          messages.map((message, idx) => (
             <div
               key={message.timestamp}
               className={`ai-chat-message ${message.role === 'user' ? 'ai-chat-message-user' : 'ai-chat-message-assistant'}`}
@@ -621,12 +710,32 @@ export default function AIChatSidebar({ isOpen, onClose }: AIChatSidebarProps) {
                           },
                         }}
                       >
-                        {message.content}
+                        {retryingIndex === idx ? '重试中...' : message.content}
                       </ReactMarkdown>
                     ) : (
                       <div className="ai-chat-message-text">...</div>
                     )}
                   </div>
+                )}
+              </div>
+              {/* 中文说明：消息气泡下方功能区（复制 + 重试）*/}
+              <div className="mt-1 flex items-center gap-3 text-xs text-secondary">
+                <button
+                  onClick={() => copyMessageAt(idx)}
+                  className="px-2 py-1 rounded hover:text-blue-600 hover:bg-light transition-colors"
+                  title="复制"
+                >
+                  复制
+                </button>
+                {message.role === 'assistant' && (
+                  <button
+                    onClick={() => retryAssistantAt(idx)}
+                    disabled={isLoading}
+                    className={`px-2 py-1 rounded transition-colors ${isLoading ? 'opacity-60 cursor-not-allowed' : 'hover:text-blue-600 hover:bg-light'}`}
+                    title="重试"
+                  >
+                    重试
+                  </button>
                 )}
               </div>
             </div>
