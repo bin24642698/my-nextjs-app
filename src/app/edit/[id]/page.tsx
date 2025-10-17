@@ -1,6 +1,7 @@
 'use client';
 
 import { useParams, useRouter } from 'next/navigation';
+import GlobalNav from '@/components/GlobalNav';
 import dynamic from 'next/dynamic';
 import { useState, useEffect } from 'react';
 import { useIDBDocument } from '@/hooks/useIDBDocument';
@@ -144,131 +145,70 @@ export default function EditPage() {
 
   return (
     <div className="h-[100dvh] flex flex-col overflow-hidden" style={{backgroundColor: 'var(--primary-bg)'}}>
-      {/* 顶部导航栏 */}
-      <nav className="bg-white border-b border-light shadow-sm z-20">
-        <div className="px-4 sm:px-6 py-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3 flex-1 min-w-0">
-              <button
-                onClick={handleBack}
-                className="flex-shrink-0 p-2 rounded-lg text-secondary hover:text-primary hover:bg-light transition-all"
-                title="返回首页"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-              </button>
+      {/* 顶部全局导航栏，集成通用功能区 */}
+      <GlobalNav
+        title={fileData.name}
+        showBackButton={true}
+        rightContent={
+          <>
+            {/* AI 助手按钮 - 桌面端 */}
+            <button
+              onClick={() => setIsAIChatOpen(!isAIChatOpen)}
+              className={`hidden sm:flex btn-primary px-4 py-2 text-sm ${isAIChatOpen ? 'opacity-80' : ''}`}
+              title={isAIChatOpen ? '关闭 AI 助手' : '打开 AI 助手'}
+            >
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+              </svg>
+              AI助手
+            </button>
 
-              <div className="h-8 w-px bg-border-light hidden sm:block"></div>
+            {/* 提示词库按钮 - 移动端（左侧通用按钮在移动端隐藏，这里补充一个入口） */}
+            <button
+              onClick={() => router.push('/prompts')}
+              className="sm:hidden p-2 rounded-lg text-secondary hover:text-primary hover:bg-light transition-all"
+              title="提示词库"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </button>
 
-              <div className="flex items-center space-x-2 min-w-0">
-                <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                </div>
-                <h1 className="text-base sm:text-lg font-semibold text-primary truncate" title={fileData.name}>
-                  {fileData.name}
-                </h1>
-              </div>
+            {/* AI 助手按钮 - 移动端 */}
+            <button
+              onClick={() => setIsAIChatOpen(!isAIChatOpen)}
+              className={`sm:hidden p-2 rounded-lg transition-all ${isAIChatOpen ? 'bg-blue-600 text-white' : 'text-secondary hover:text-primary hover:bg-light'}`}
+              title={isAIChatOpen ? '关闭 AI 助手' : '打开 AI 助手'}
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+              </svg>
+            </button>
 
-              <div className="h-8 w-px bg-border-light hidden sm:block mx-2"></div>
+            {/* 保存状态按钮 - 桌面端 */}
+            <button
+              onClick={() => alert('文件已自动保存到 IndexedDB')}
+              className="hidden sm:flex btn-primary px-4 py-2 text-sm"
+            >
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              已保存
+            </button>
 
-              {/* 通用功能按钮区（左侧） */}
-              <div className="hidden sm:flex items-center space-x-3">
-                {/* 提示词库按钮 */}
-                <button
-                  onClick={() => router.push('/prompts')}
-                  className="px-4 py-2 rounded-lg text-base font-bold text-primary hover:text-blue-600 hover:bg-light transition-all flex items-center space-x-2"
-                  title="提示词库"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                  <span>提示词库</span>
-                </button>
-
-                {/* 画布工作流按钮 */}
-                <button
-                  onClick={() => router.push('/workflow')}
-                  className="px-4 py-2 rounded-lg text-base font-bold text-primary hover:text-blue-600 hover:bg-light transition-all flex items-center space-x-2"
-                  title="画布工作流"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 16a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-3zM14 16a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1h-4a1 1 0 01-1-1v-3z" />
-                  </svg>
-                  <span>画布工作流</span>
-                </button>
-              </div>
-            </div>
-
-            {/* 右侧按钮区（AI助手和保存状态） */}
-            <div className="flex items-center space-x-2 ml-4">
-              {/* AI 助手按钮 - 桌面端 */}
-              <button
-                onClick={() => setIsAIChatOpen(!isAIChatOpen)}
-                className={`hidden sm:flex btn-primary px-4 py-2 text-sm ${
-                  isAIChatOpen ? 'opacity-80' : ''
-                }`}
-                title={isAIChatOpen ? '关闭 AI 助手' : '打开 AI 助手'}
-              >
-                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-                </svg>
-                AI助手
-              </button>
-
-              {/* 提示词库按钮 - 移动端（因为左侧区域在移动端隐藏） */}
-              <button
-                onClick={() => router.push('/prompts')}
-                className="sm:hidden p-2 rounded-lg text-secondary hover:text-primary hover:bg-light transition-all"
-                title="提示词库"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-              </button>
-
-              {/* AI 助手按钮 - 移动端 */}
-              <button
-                onClick={() => setIsAIChatOpen(!isAIChatOpen)}
-                className={`sm:hidden p-2 rounded-lg transition-all ${
-                  isAIChatOpen
-                    ? 'bg-blue-600 text-white'
-                    : 'text-secondary hover:text-primary hover:bg-light'
-                }`}
-                title={isAIChatOpen ? '关闭 AI 助手' : '打开 AI 助手'}
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-                </svg>
-              </button>
-
-              {/* 保存状态按钮 - 桌面端 */}
-              <button
-                onClick={() => alert('文件已自动保存到 IndexedDB')}
-                className="hidden sm:flex btn-primary px-4 py-2 text-sm"
-              >
-                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                已保存
-              </button>
-
-              {/* 保存状态按钮 - 移动端 */}
-              <button
-                onClick={() => alert('文件已自动保存到 IndexedDB')}
-                className="sm:hidden p-2 rounded-lg text-green-600 bg-green-50"
-                title="已自动保存"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-              </button>
-            </div>
-          </div>
-        </div>
-      </nav>
+            {/* 保存状态按钮 - 移动端 */}
+            <button
+              onClick={() => alert('文件已自动保存到 IndexedDB')}
+              className="sm:hidden p-2 rounded-lg text-green-600 bg-green-50"
+              title="已自动保存"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            </button>
+          </>
+        }
+      />
 
       {/* 编辑器和侧边栏容器 */}
       <main className="flex-1 overflow-hidden min-h-0 flex">
