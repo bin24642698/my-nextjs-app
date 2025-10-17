@@ -7,11 +7,11 @@ interface GlobalNavProps {
   title?: string;
   showBackButton?: boolean;
   rightContent?: React.ReactNode;
-  // 是否使用 sticky 使顶栏始终可见
+  // 是否使用 sticky 使顶栏始终可见（默认启用）
   sticky?: boolean;
 }
 
-export default function GlobalNav({ title = '文档编辑平台', showBackButton = false, rightContent, sticky = false }: GlobalNavProps) {
+export default function GlobalNav({ title = '文档编辑平台', showBackButton = false, rightContent, sticky = true }: GlobalNavProps) {
   const router = useRouter();
   const pathname = usePathname();
   // 移动端菜单开关
