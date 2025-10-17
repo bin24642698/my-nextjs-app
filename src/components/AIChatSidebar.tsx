@@ -500,10 +500,10 @@ export default function AIChatSidebar({ isOpen, onClose, chapters = [], currentC
                 title="关联章节"
                 disabled={chapters.length === 0}
               >
+                {/* 中文说明：链环互扣图标，表示关联/链接 */}
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M10 13a5 5 0 0 1 7 7l-1.5 1.5" />
-                  <path d="M14 11a5 5 0 0 0-7-7L5.5 5.5" />
-                  <path d="M8.5 15.5 5.5 18.5a5 5 0 0 0 7 7l3-3" />
+                  <path d="M10 13a5 5 0 0 0 7 7l3-3a5 5 0 0 0-7-7l-1.5 1.5" />
+                  <path d="M14 11a5 5 0 0 0-7-7l-3 3a5 5 0 0 0 7 7l1.5-1.5" />
                 </svg>
               </button>
               <button
@@ -777,10 +777,10 @@ export default function AIChatSidebar({ isOpen, onClose, chapters = [], currentC
             title="关联章节"
             disabled={chapters.length === 0}
           >
+            {/* 中文说明：链环互扣图标，表示关联/链接 */}
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M10 13a5 5 0 0 1 7 7l-1.5 1.5" />
-              <path d="M14 11a5 5 0 0 0-7-7L5.5 5.5" />
-              <path d="M8.5 15.5 5.5 18.5a5 5 0 0 0 7 7l3-3" />
+              <path d="M10 13a5 5 0 0 0 7 7l3-3a5 5 0 0 0-7-7l-1.5 1.5" />
+              <path d="M14 11a5 5 0 0 0-7-7l-3 3a5 5 0 0 0 7 7l1.5-1.5" />
             </svg>
           </button>
           <button
