@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useSystemPrompt } from '@/hooks/useSystemPrompt';
 import { SystemPromptService } from '@/utils/idb/systemPrompts';
-import type { SystemPromptSchema } from '@/utils/idb/schema';
+import type { SystemPromptSchema, Chapter } from '@/utils/idb/schema';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
@@ -18,20 +18,32 @@ interface Message {
 interface AIChatSidebarProps {
   isOpen: boolean;
   onClose: () => void;
+  // 中文说明：可选章节与当前章节，用于“关联章节”功能
+  chapters?: Chapter[];
+  currentChapterId?: string;
 }
 
 const MIN_WIDTH = 300;
 const MAX_WIDTH = 800;
 const DEFAULT_WIDTH = 400;
 
-export default function AIChatSidebar({ isOpen, onClose }: AIChatSidebarProps) {
+export default function AIChatSidebar({ isOpen, onClose, chapters = [], currentChapterId }: AIChatSidebarProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [sidebarWidth, setSidebarWidth] = useState(DEFAULT_WIDTH);
   const [isResizing, setIsResizing] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const [selectedModel, setSelectedModel] = useState<'gemini-2.5-pro' | 'gemini-flash-latest'>('gemini-2.5-pro');
+  // 中文说明：从localStorage读取上次选择的模型,若无则默认选择第一个(gemini-2.5-pro)
+  const [selectedModel, setSelectedModel] = useState<'gemini-2.5-pro' | 'gemini-flash-latest'>(() => {
+    if (typeof window !== 'undefined') {
+      const savedModel = localStorage.getItem('ai-selected-model');
+      if (savedModel === 'gemini-2.5-pro' || savedModel === 'gemini-flash-latest') {
+        return savedModel;
+      }
+    }
+    return 'gemini-2.5-pro'; // 默认第一个模型
+  });
   // 中文说明：正在重试的消息下标（仅 assistant 用），用于展示加载状态
   const [retryingIndex, setRetryingIndex] = useState<number | null>(null);
   // 中文说明：确认弹窗状态（删除或重试）
@@ -49,6 +61,9 @@ export default function AIChatSidebar({ isOpen, onClose }: AIChatSidebarProps) {
   // 中文说明：保存按钮可用性与文案
   const isSaveDisabled = loadingPrompt || savingPrompt || savedIndicator;
   const saveBtnText = savingPrompt ? '保存中...' : (savedIndicator ? '已保存' : '保存');
+  // 中文说明：“关联章节”弹窗与选中集合
+  const [showAssociateModal, setShowAssociateModal] = useState(false);
+  const [selectedChapterIds, setSelectedChapterIds] = useState<string[]>([]);
   const handleSaveSystemPrompt = async () => {
     if (isSaveDisabled) return;
     try {
@@ -127,6 +142,14 @@ export default function AIChatSidebar({ isOpen, onClose }: AIChatSidebarProps) {
       window.removeEventListener('resize', checkMobile);
     };
   }, []);
+
+  // 中文说明：根据当前章节初始化默认关联（若尚未选择）
+  useEffect(() => {
+    if (currentChapterId && selectedChapterIds.length === 0) {
+      setSelectedChapterIds([currentChapterId]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentChapterId]);
 
   // 开始拖拽
   const startResizing = (e: React.MouseEvent) => {
@@ -293,6 +316,64 @@ export default function AIChatSidebar({ isOpen, onClose }: AIChatSidebarProps) {
     }
   };
 
+  // 中文说明：切换选择章节
+  const toggleChapter = (id: string) => {
+    setSelectedChapterIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  };
+
+  // 中文说明：一键选择前 N 章
+  const selectFirstN = (n: number) => {
+    const ids = chapters.slice(0, n).map(c => c.id);
+    setSelectedChapterIds(ids);
+  };
+
+  // 中文说明：渲染“关联章节”弹窗
+  const renderAssociateModal = () => {
+    if (!showAssociateModal) return null;
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
+        <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-light">
+            <h2 className="text-lg font-bold text-primary">选择关联章节</h2>
+            <button onClick={() => setShowAssociateModal(false)} className="p-2 rounded-lg text-secondary hover:text-primary hover:bg-light transition-all" title="关闭">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <div className="px-6 py-3 flex items-center gap-3 border-b border-light">
+            <button onClick={() => selectFirstN(5)} className="px-3 py-1.5 rounded-lg text-primary hover:text-blue-600 hover:bg-light transition-colors border border-light" title="一键关联前五章">前五章</button>
+            <button onClick={() => selectFirstN(15)} className="px-3 py-1.5 rounded-lg text-primary hover:text-blue-600 hover:bg-light transition-colors border border-light" title="一键关联前十五章">前十五章</button>
+            <div className="flex-1"></div>
+            <span className="text-xs text-secondary">已选 {selectedChapterIds.length} 章</span>
+          </div>
+          <div className="flex-1 overflow-auto p-6">
+            {chapters.length === 0 ? (
+              <p className="text-secondary">暂无章节可关联</p>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {chapters.map(ch => (
+                  <label key={ch.id} className="flex items-center gap-2 p-3 border border-light rounded-lg hover:bg-light cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={selectedChapterIds.includes(ch.id)}
+                      onChange={() => toggleChapter(ch.id)}
+                    />
+                    <span className="text-sm text-primary truncate">{ch.title || `第 ${ch.id} 章`}</span>
+                  </label>
+                ))}
+              </div>
+            )}
+          </div>
+          <div className="px-6 py-3 border-t border-light flex items-center justify-end gap-3">
+            <button onClick={() => setSelectedChapterIds([])} className="px-4 py-2 rounded-lg text-secondary hover:text-primary hover:bg-light transition-all">清空</button>
+            <button onClick={() => setShowAssociateModal(false)} className="btn-primary px-4 py-2">确认关联</button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   // 中文说明：渲染通用确认弹窗（用于删除/重试）
   const renderConfirmModal = () => {
     if (!confirmModal) return null;
@@ -353,6 +434,12 @@ export default function AIChatSidebar({ isOpen, onClose }: AIChatSidebarProps) {
   // 清空对话
   const clearChat = () => {
     setMessages([]);
+  };
+
+  // 中文说明：处理模型切换,同时保存到localStorage
+  const handleModelChange = (model: 'gemini-2.5-pro' | 'gemini-flash-latest') => {
+    setSelectedModel(model);
+    localStorage.setItem('ai-selected-model', model);
   };
 
   if (!isOpen) return null;
@@ -458,7 +545,7 @@ export default function AIChatSidebar({ isOpen, onClose }: AIChatSidebarProps) {
               <span>模型：</span>
               <select
                 value={selectedModel}
-                onChange={(e) => setSelectedModel(e.target.value as 'gemini-2.5-pro' | 'gemini-flash-latest')}
+                onChange={(e) => handleModelChange(e.target.value as 'gemini-2.5-pro' | 'gemini-flash-latest')}
                 className="form-input"
                 style={{ flex: 1, minWidth: 0, padding: '6px 10px', fontSize: '14px' }}
               >
@@ -720,7 +807,7 @@ export default function AIChatSidebar({ isOpen, onClose }: AIChatSidebarProps) {
           <span>模型：</span>
           <select
             value={selectedModel}
-            onChange={(e) => setSelectedModel(e.target.value as 'gemini-2.5-pro' | 'gemini-flash-latest')}
+            onChange={(e) => handleModelChange(e.target.value as 'gemini-2.5-pro' | 'gemini-flash-latest')}
             className="form-input"
             style={{ flex: 1, minWidth: 0, padding: '6px 10px', fontSize: '14px' }}
           >
@@ -858,6 +945,19 @@ export default function AIChatSidebar({ isOpen, onClose }: AIChatSidebarProps) {
           rows={1}
           disabled={isLoading}
         />
+        {/* 中文说明：关联章节按钮（移动端） */}
+        <button
+          onClick={() => setShowAssociateModal(true)}
+          className="ai-chat-action-btn"
+          title="关联章节"
+          disabled={chapters.length === 0}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M10 13a5 5 0 0 1 7 7l-1.5 1.5" />
+            <path d="M14 11a5 5 0 0 0-7-7L5.5 5.5" />
+            <path d="M8.5 15.5 5.5 18.5a5 5 0 0 0 7 7l3-3" />
+          </svg>
+        </button>
         <button
           onClick={sendMessage}
           disabled={!input.trim() || isLoading}
@@ -939,6 +1039,7 @@ export default function AIChatSidebar({ isOpen, onClose }: AIChatSidebarProps) {
         </div>
       </div>
     )}
+    {renderAssociateModal()}
   </>
   );
 }

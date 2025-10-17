@@ -230,6 +230,8 @@ export default function EditPage() {
           <AIChatSidebar
             isOpen={isAIChatOpen}
             onClose={() => setIsAIChatOpen(false)}
+            chapters={chapters}
+            currentChapterId={currentChapterId}
           />
         )}
       </main>
