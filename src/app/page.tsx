@@ -182,8 +182,8 @@ export default function Home() {
 
   return (
     <div className="min-h-screen">
-      {/* 全局导航栏（首页设为 sticky） */}
-      <GlobalNav title="文件上传平台" sticky />
+      {/* 全局导航栏（使用默认 sticky） */}
+      <GlobalNav title="文件上传平台" />
 
       {/* 主要内容区域 */}
       <main
