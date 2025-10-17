@@ -503,66 +503,80 @@ export default function AIChatSidebar({ isOpen, onClose }: AIChatSidebarProps) {
                       </svg>
                     )}
                   </div>
-                  <div className="ai-chat-message-content">
-                    {message.role === 'user' ? (
-                      <div className="ai-chat-message-text">{message.content || '...'}</div>
-                    ) : (
-                      <div className="ai-chat-message-markdown">
-                        {message.content ? (
-                          <ReactMarkdown
-                            remarkPlugins={[remarkGfm]}
-                            rehypePlugins={[rehypeRaw, rehypeHighlight]}
-                            components={{
-                              code: (props: React.HTMLAttributes<HTMLElement> & { inline?: boolean }) => {
-                                const { inline, className, children, ...rest } = props;
-                                return !inline ? (
-                                  <code className={`${className || ''} hljs`} {...rest}>
-                                    {children}
-                                  </code>
-                                ) : (
-                                  <code className={className} {...rest}>
-                                    {children}
-                                  </code>
-                                );
-                              },
-                            }}
-                          >
-                            {retryingIndex === idx ? '重试中...' : message.content}
-                          </ReactMarkdown>
-                        ) : (
-                          <div className="ai-chat-message-text">...</div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                  {/* 中文说明：消息气泡下方功能区（复制 / 重试 / 删除）*/}
-                  <div className="mt-1 flex items-center gap-3 text-xs text-secondary">
+              <div className="ai-chat-message-body">
+                <div className="ai-chat-message-content">
+                  {message.role === 'user' ? (
+                    <div className="ai-chat-message-text">{message.content || '...'}</div>
+                  ) : (
+                    <div className="ai-chat-message-markdown">
+                      {message.content ? (
+                        <ReactMarkdown
+                          remarkPlugins={[remarkGfm]}
+                          rehypePlugins={[rehypeRaw, rehypeHighlight]}
+                          components={{
+                            code: (props: React.HTMLAttributes<HTMLElement> & { inline?: boolean }) => {
+                              const { inline, className, children, ...rest } = props;
+                              return !inline ? (
+                                <code className={`${className || ''} hljs`} {...rest}>
+                                  {children}
+                                </code>
+                              ) : (
+                                <code className={className} {...rest}>
+                                  {children}
+                                </code>
+                              );
+                            },
+                          }}
+                        >
+                          {retryingIndex === idx ? '重试中...' : message.content}
+                        </ReactMarkdown>
+                      ) : (
+                        <div className="ai-chat-message-text">...</div>
+                      )}
+                    </div>
+                  )}
+                </div>
+                {/* 中文说明：消息气泡下方功能区（复制 / 重试 / 删除）*/}
+                <div className="ai-chat-actions">
+                  <button
+                    onClick={() => copyMessageAt(idx)}
+                    className="ai-chat-action-btn"
+                    title="复制"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                    </svg>
+                  </button>
+                  {message.role === 'assistant' && (
                     <button
-                      onClick={() => copyMessageAt(idx)}
-                      className="px-2 py-1 rounded hover:text-blue-600 hover:bg-light transition-colors"
-                      title="复制"
-                    >
-                      复制
-                    </button>
-                    {message.role === 'assistant' && (
-                      <button
-                        onClick={() => setConfirmModal({ type: 'retry', index: idx })}
-                        disabled={isLoading}
-                        className={`px-2 py-1 rounded transition-colors ${isLoading ? 'opacity-60 cursor-not-allowed' : 'hover:text-blue-600 hover:bg-light'}`}
-                        title="重试"
-                      >
-                        重试
-                      </button>
-                    )}
-                    <button
-                      onClick={() => setConfirmModal({ type: 'delete', index: idx })}
+                      onClick={() => setConfirmModal({ type: 'retry', index: idx })}
                       disabled={isLoading}
-                      className={`px-2 py-1 rounded transition-colors ${isLoading ? 'opacity-60 cursor-not-allowed' : 'hover:text-red-600 hover:bg-red-50'}`}
-                      title="删除"
+                      className="ai-chat-action-btn"
+                      title="重试"
                     >
-                      删除
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <polyline points="1 4 1 10 7 10"></polyline>
+                        <path d="M3.51 15a9 9 0 1 0 .49-5.27L1 10"></path>
+                      </svg>
                     </button>
-                  </div>
+                  )}
+                  <button
+                    onClick={() => setConfirmModal({ type: 'delete', index: idx })}
+                    disabled={isLoading}
+                    className="ai-chat-action-btn"
+                    title="删除"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <polyline points="3 6 5 6 21 6"></polyline>
+                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path>
+                      <path d="M10 11v6"></path>
+                      <path d="M14 11v6"></path>
+                      <path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                  </button>
+                </div>
+              </div>
                 </div>
               ))
             )}
@@ -751,65 +765,79 @@ export default function AIChatSidebar({ isOpen, onClose }: AIChatSidebarProps) {
                   </svg>
                 )}
               </div>
-              <div className="ai-chat-message-content">
-                {message.role === 'user' ? (
-                  <div className="ai-chat-message-text">{message.content || '...'}</div>
-                ) : (
-                  <div className="ai-chat-message-markdown">
-                    {message.content ? (
-                      <ReactMarkdown
-                        remarkPlugins={[remarkGfm]}
-                        rehypePlugins={[rehypeRaw, rehypeHighlight]}
-                        components={{
-                          code: (props: React.HTMLAttributes<HTMLElement> & { inline?: boolean }) => {
-                            const { inline, className, children, ...rest } = props;
-                            return !inline ? (
-                              <code className={`${className || ''} hljs`} {...rest}>
-                                {children}
-                              </code>
-                            ) : (
-                              <code className={className} {...rest}>
-                                {children}
-                              </code>
-                            );
-                          },
-                        }}
-                      >
-                        {retryingIndex === idx ? '重试中...' : message.content}
-                      </ReactMarkdown>
-                    ) : (
-                      <div className="ai-chat-message-text">...</div>
-                    )}
-                  </div>
-                )}
-              </div>
-              {/* 中文说明：消息气泡下方功能区（复制 / 重试 / 删除）*/}
-              <div className="mt-1 flex items-center gap-3 text-xs text-secondary">
-                <button
-                  onClick={() => copyMessageAt(idx)}
-                  className="px-2 py-1 rounded hover:text-blue-600 hover:bg-light transition-colors"
-                  title="复制"
-                >
-                  复制
-                </button>
-                {message.role === 'assistant' && (
+              <div className="ai-chat-message-body">
+                <div className="ai-chat-message-content">
+                  {message.role === 'user' ? (
+                    <div className="ai-chat-message-text">{message.content || '...'}</div>
+                  ) : (
+                    <div className="ai-chat-message-markdown">
+                      {message.content ? (
+                        <ReactMarkdown
+                          remarkPlugins={[remarkGfm]}
+                          rehypePlugins={[rehypeRaw, rehypeHighlight]}
+                          components={{
+                            code: (props: React.HTMLAttributes<HTMLElement> & { inline?: boolean }) => {
+                              const { inline, className, children, ...rest } = props;
+                              return !inline ? (
+                                <code className={`${className || ''} hljs`} {...rest}>
+                                  {children}
+                                </code>
+                              ) : (
+                                <code className={className} {...rest}>
+                                  {children}
+                                </code>
+                              );
+                            },
+                          }}
+                        >
+                          {retryingIndex === idx ? '重试中...' : message.content}
+                        </ReactMarkdown>
+                      ) : (
+                        <div className="ai-chat-message-text">...</div>
+                      )}
+                    </div>
+                  )}
+                </div>
+                {/* 中文说明：消息气泡下方功能区（复制 / 重试 / 删除）*/}
+                <div className="ai-chat-actions">
                   <button
-                    onClick={() => setConfirmModal({ type: 'retry', index: idx })}
-                    disabled={isLoading}
-                    className={`px-2 py-1 rounded transition-colors ${isLoading ? 'opacity-60 cursor-not-allowed' : 'hover:text-blue-600 hover:bg-light'}`}
-                    title="重试"
+                    onClick={() => copyMessageAt(idx)}
+                    className="ai-chat-action-btn"
+                    title="复制"
                   >
-                    重试
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                    </svg>
                   </button>
-                )}
-                <button
-                  onClick={() => setConfirmModal({ type: 'delete', index: idx })}
-                  disabled={isLoading}
-                  className={`px-2 py-1 rounded transition-colors ${isLoading ? 'opacity-60 cursor-not-allowed' : 'hover:text-red-600 hover:bg-red-50'}`}
-                  title="删除"
-                >
-                  删除
-                </button>
+                  {message.role === 'assistant' && (
+                    <button
+                      onClick={() => setConfirmModal({ type: 'retry', index: idx })}
+                      disabled={isLoading}
+                      className="ai-chat-action-btn"
+                      title="重试"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <polyline points="1 4 1 10 7 10"></polyline>
+                        <path d="M3.51 15a9 9 0 1 0 .49-5.27L1 10"></path>
+                      </svg>
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setConfirmModal({ type: 'delete', index: idx })}
+                    disabled={isLoading}
+                    className="ai-chat-action-btn"
+                    title="删除"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <polyline points="3 6 5 6 21 6"></polyline>
+                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path>
+                      <path d="M10 11v6"></path>
+                      <path d="M14 11v6"></path>
+                      <path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                  </button>
+                </div>
               </div>
             </div>
           ))

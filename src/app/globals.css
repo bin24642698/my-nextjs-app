@@ -932,6 +932,49 @@ body {
   border-color: #3b82f6;
 }
 
+/* 气泡下方动作容器与按钮 */
+.ai-chat-message-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.ai-chat-message-user .ai-chat-message-body {
+  align-items: flex-end;
+}
+
+.ai-chat-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.ai-chat-action-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: 1px solid var(--border-light);
+  background: var(--primary-bg);
+  color: var(--secondary-text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.ai-chat-action-btn:hover {
+  background: #f1f5f9;
+  color: #2563eb;
+  border-color: #dbeafe;
+}
+
+.ai-chat-action-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 /* AI 输入框容器 */
 .ai-chat-input-container {
   flex-shrink: 0;
