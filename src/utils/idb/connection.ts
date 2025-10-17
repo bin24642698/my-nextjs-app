@@ -6,7 +6,7 @@ export async function getDB(): Promise<IDBDatabase> {
   if (dbInstance) return dbInstance;
 
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open('FileUploadPlatform', 1);
+    const request = indexedDB.open('FileUploadPlatform', 2); // 升级版本号
 
     request.onerror = () => {
       reject(new Error('Failed to open IndexedDB'));
@@ -37,6 +37,15 @@ export async function getDB(): Promise<IDBDatabase> {
       // 创建缓存存储
       if (!db.objectStoreNames.contains('cache')) {
         db.createObjectStore('cache', { keyPath: 'url' });
+      }
+
+      // 创建系统提示词存储
+      if (!db.objectStoreNames.contains('systemPrompts')) {
+        const promptStore = db.createObjectStore('systemPrompts', { keyPath: 'id' });
+        promptStore.createIndex('title', 'title', { unique: false });
+        promptStore.createIndex('category', 'category', { unique: false });
+        promptStore.createIndex('createdAt', 'createdAt', { unique: false });
+        promptStore.createIndex('updatedAt', 'updatedAt', { unique: false });
       }
     };
   });

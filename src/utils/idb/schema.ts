@@ -32,8 +32,20 @@ export interface CacheSchema {
   expires: number;
 }
 
+// 系统提示词卡片数据结构
+export interface SystemPromptSchema {
+  id: string;
+  title: string;
+  content: string;
+  description?: string;
+  category?: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
 export interface DatabaseSchema {
   documents: DocumentSchema;
   settings: SettingsSchema;
   cache: CacheSchema;
+  systemPrompts: SystemPromptSchema;
 }

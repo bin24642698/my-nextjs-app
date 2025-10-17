@@ -2,6 +2,8 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useSystemPrompt } from '@/hooks/useSystemPrompt';
+import { SystemPromptService } from '@/utils/idb/systemPrompts';
+import type { SystemPromptSchema } from '@/utils/idb/schema';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
@@ -32,10 +34,14 @@ export default function AIChatSidebar({ isOpen, onClose }: AIChatSidebarProps) {
   const [selectedModel, setSelectedModel] = useState<'gemini-2.5-pro' | 'gemini-flash-latest'>('gemini-2.5-pro');
   // 中文说明：是否显示设置面板
   const [showSettings, setShowSettings] = useState(false);
-  // 中文说明：保存按钮的“已保存”提示状态
+  // 中文说明：保存按钮的"已保存"提示状态
   const [savedIndicator, setSavedIndicator] = useState(false);
   // 中文说明：系统提示词 Hook
   const { prompt: systemPrompt, setPrompt: setSystemPrompt, save: saveSystemPrompt, loading: loadingPrompt, saving: savingPrompt } = useSystemPrompt();
+  // 中文说明：提示词库选择器状态
+  const [showPromptLibrary, setShowPromptLibrary] = useState(false);
+  const [promptLibrary, setPromptLibrary] = useState<SystemPromptSchema[]>([]);
+  const [loadingLibrary, setLoadingLibrary] = useState(false);
   // 中文说明：保存按钮可用性与文案
   const isSaveDisabled = loadingPrompt || savingPrompt || savedIndicator;
   const saveBtnText = savingPrompt ? '保存中...' : (savedIndicator ? '已保存' : '保存');
@@ -45,10 +51,36 @@ export default function AIChatSidebar({ isOpen, onClose }: AIChatSidebarProps) {
       await saveSystemPrompt(systemPrompt);
       setSavedIndicator(true);
       setTimeout(() => setSavedIndicator(false), 1000);
-    } catch (e) {
-      // 中文说明：失败则不展示“已保存”状态
+    } catch {
+      // 中文说明：失败则不展示"已保存"状态
     }
   };
+
+  // 加载提示词库
+  const loadPromptLibrary = async () => {
+    setLoadingLibrary(true);
+    try {
+      const prompts = await SystemPromptService.getAll();
+      setPromptLibrary(prompts);
+    } catch (error) {
+      console.error('加载提示词库失败:', error);
+    } finally {
+      setLoadingLibrary(false);
+    }
+  };
+
+  // 选择提示词
+  const selectPrompt = (prompt: SystemPromptSchema) => {
+    setSystemPrompt(prompt.content);
+    setShowPromptLibrary(false);
+  };
+
+  // 打开提示词库时加载列表
+  useEffect(() => {
+    if (showPromptLibrary) {
+      loadPromptLibrary();
+    }
+  }, [showPromptLibrary]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const sidebarRef = useRef<HTMLDivElement>(null);
@@ -270,7 +302,13 @@ export default function AIChatSidebar({ isOpen, onClose }: AIChatSidebarProps) {
                 rows={4}
                 style={{ padding: '8px 10px', resize: 'vertical' }}
               />
-              <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+              <div style={{ display: 'flex', gap: '8px', justifyContent: 'space-between' }}>
+                <button
+                  onClick={() => setShowPromptLibrary(true)}
+                  style={{ padding: '6px 12px', border: '1px solid var(--border-light)', borderRadius: 6, background: 'var(--btn-bg, #fff)', cursor: 'pointer' }}
+                >
+                  从库中选择
+                </button>
                 <button
                   onClick={handleSaveSystemPrompt}
                   disabled={isSaveDisabled}
@@ -416,6 +454,7 @@ export default function AIChatSidebar({ isOpen, onClose }: AIChatSidebarProps) {
 
   // 桌面端：在同一图层，占据实际空间
   return (
+    <>
     <div
       ref={sidebarRef}
       className="ai-chat-sidebar-desktop"
@@ -482,7 +521,13 @@ export default function AIChatSidebar({ isOpen, onClose }: AIChatSidebarProps) {
             rows={4}
             style={{ padding: '8px 10px', resize: 'vertical' }}
           />
-          <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+          <div style={{ display: 'flex', gap: '8px', justifyContent: 'space-between' }}>
+            <button
+              onClick={() => setShowPromptLibrary(true)}
+              style={{ padding: '6px 12px', border: '1px solid var(--border-light)', borderRadius: 6, background: 'var(--btn-bg, #fff)', cursor: 'pointer' }}
+            >
+              从库中选择
+            </button>
             <button
               onClick={handleSaveSystemPrompt}
               disabled={isSaveDisabled}
@@ -622,5 +667,67 @@ export default function AIChatSidebar({ isOpen, onClose }: AIChatSidebarProps) {
         </button>
       </div>
     </div>
+
+    {/* 提示词库弹窗 */}
+    {showPromptLibrary && (
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center p-4"
+        style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
+        onClick={() => setShowPromptLibrary(false)}
+      >
+        <div
+          className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex items-center justify-between px-6 py-4 border-b border-light">
+            <h2 className="text-xl font-bold text-primary">选择提示词</h2>
+            <button
+              onClick={() => setShowPromptLibrary(false)}
+              className="p-2 rounded-lg text-secondary hover:text-primary hover:bg-light transition-all"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-6">
+            {loadingLibrary ? (
+              <div className="text-center py-12">
+                <div className="w-12 h-12 border-4 border-gray-300 border-t-gray-900 rounded-full animate-spin mx-auto mb-4"></div>
+                <p className="text-secondary">加载中...</p>
+              </div>
+            ) : promptLibrary.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-secondary mb-4">还没有保存的提示词</p>
+                <p className="text-sm text-muted">点击右上角按钮进入提示词管理页面创建</p>
+              </div>
+            ) : (
+              <div className="grid gap-4">
+                {promptLibrary.map((prompt) => (
+                  <div
+                    key={prompt.id}
+                    className="card p-4 cursor-pointer hover:shadow-lg transition-all"
+                    onClick={() => selectPrompt(prompt)}
+                  >
+                    <div className="flex items-start justify-between mb-2">
+                      <h3 className="text-lg font-semibold text-primary">{prompt.title}</h3>
+                      {prompt.category && (
+                        <span className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded">{prompt.category}</span>
+                      )}
+                    </div>
+                    {prompt.description && (
+                      <p className="text-sm text-secondary mb-2">{prompt.description}</p>
+                    )}
+                    <p className="text-sm text-muted line-clamp-2">{prompt.content}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    )}
+  </>
   );
 }
