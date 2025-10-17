@@ -186,6 +186,19 @@ export default function AIChatSidebar({ isOpen, onClose, chapters = [], currentC
     };
   }, [isResizing, sidebarWidth]);
 
+  // 构造：根据已选章节生成关联上下文（作为 system 消息）
+  const buildAssociatedContext = (): Message[] => {
+    if (!chapters || selectedChapterIds.length === 0) return [];
+    const picked = chapters.filter(ch => selectedChapterIds.includes(ch.id));
+    if (picked.length === 0) return [];
+    const header = `已关联章节（共 ${picked.length} 章）：`;
+    const body = picked
+      .map((ch, i) => `【第${i + 1}章】${ch.title || ch.id}\n${ch.content}`)
+      .join('\n\n');
+    const content = `${header}\n\n${body}`;
+    return [{ role: 'system', content, timestamp: Date.now() }];
+  };
+
   // 发送消息
   const sendMessage = async () => {
     if (!input.trim() || isLoading) return;
@@ -202,7 +215,7 @@ export default function AIChatSidebar({ isOpen, onClose, chapters = [], currentC
 
     try {
       // 纯对话模式：不再自动注入文档内容到上下文
-      const contextMessages: Message[] = [];
+      const contextMessages: Message[] = buildAssociatedContext();
       // 中文说明：如已设置系统提示词，则将其作为第一条 system 消息注入上下文
       const systemMsg: Message[] = systemPrompt && systemPrompt.trim()
         ? [{ role: 'system', content: systemPrompt.trim(), timestamp: Date.now() }]
@@ -274,12 +287,13 @@ export default function AIChatSidebar({ isOpen, onClose, chapters = [], currentC
 
       // 上下文取到用户消息为止（包含该用户消息，不包含当前助手及之后的消息）
       const context = messages.slice(0, userIndex + 1);
+      const associated = buildAssociatedContext();
 
       const response = await fetch('/api/ai/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          messages: [...systemMsg, ...context],
+          messages: [...systemMsg, ...associated, ...context],
           stream: false,
           model: selectedModel,
         }),
@@ -703,6 +717,7 @@ export default function AIChatSidebar({ isOpen, onClose, chapters = [], currentC
           </div>
         </div>
       {renderConfirmModal()}
+      {renderAssociateModal()}
       </>
     );
   }
