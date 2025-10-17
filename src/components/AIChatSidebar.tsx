@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { useSystemPrompt } from '@/hooks/useSystemPrompt';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
@@ -29,6 +30,25 @@ export default function AIChatSidebar({ isOpen, onClose }: AIChatSidebarProps) {
   const [isResizing, setIsResizing] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [selectedModel, setSelectedModel] = useState<'gemini-2.5-pro' | 'gemini-flash-latest'>('gemini-2.5-pro');
+  // 中文说明：是否显示设置面板
+  const [showSettings, setShowSettings] = useState(false);
+  // 中文说明：保存按钮的“已保存”提示状态
+  const [savedIndicator, setSavedIndicator] = useState(false);
+  // 中文说明：系统提示词 Hook
+  const { prompt: systemPrompt, setPrompt: setSystemPrompt, save: saveSystemPrompt, loading: loadingPrompt, saving: savingPrompt } = useSystemPrompt();
+  // 中文说明：保存按钮可用性与文案
+  const isSaveDisabled = loadingPrompt || savingPrompt || savedIndicator;
+  const saveBtnText = savingPrompt ? '保存中...' : (savedIndicator ? '已保存' : '保存');
+  const handleSaveSystemPrompt = async () => {
+    if (isSaveDisabled) return;
+    try {
+      await saveSystemPrompt(systemPrompt);
+      setSavedIndicator(true);
+      setTimeout(() => setSavedIndicator(false), 1000);
+    } catch (e) {
+      // 中文说明：失败则不展示“已保存”状态
+    }
+  };
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const sidebarRef = useRef<HTMLDivElement>(null);
@@ -124,12 +144,16 @@ export default function AIChatSidebar({ isOpen, onClose }: AIChatSidebarProps) {
     try {
       // 纯对话模式：不再自动注入文档内容到上下文
       const contextMessages: Message[] = [];
+      // 中文说明：如已设置系统提示词，则将其作为第一条 system 消息注入上下文
+      const systemMsg: Message[] = systemPrompt && systemPrompt.trim()
+        ? [{ role: 'system', content: systemPrompt.trim(), timestamp: Date.now() }]
+        : [];
 
       const response = await fetch('/api/ai/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          messages: [...contextMessages, ...messages, userMessage],
+          messages: [...systemMsg, ...contextMessages, ...messages, userMessage],
           stream: false,
           model: selectedModel,
         }),
@@ -212,6 +236,17 @@ export default function AIChatSidebar({ isOpen, onClose }: AIChatSidebarProps) {
                 </button>
               )}
               <button
+                onClick={() => setShowSettings((s) => !s)}
+                className="ai-chat-icon-btn"
+                title="系统提示词设置"
+              >
+                {/* 中文说明：齿轮图标 */}
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" />
+                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9A1.65 1.65 0 0 0 10 3.09V3a2 2 0 1 1 4 0v.09c0 .66.39 1.25 1 1.51.57.26 1.25.17 1.74-.24l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06c-.41.49-.5 1.17-.24 1.74.26.61.85 1 1.51 1H21a2 2 0 1 1 0 4h-.09c-.66 0-1.25.39-1.51 1Z" />
+                </svg>
+              </button>
+              <button
                 onClick={onClose}
                 className="ai-chat-icon-btn"
                 title="关闭侧边栏"
@@ -222,6 +257,30 @@ export default function AIChatSidebar({ isOpen, onClose }: AIChatSidebarProps) {
               </button>
             </div>
           </div>
+
+          {/* 设置面板（移动端） */}
+          {showSettings && (
+            <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border-light)', display: 'grid', gap: '8px' }}>
+              <label style={{ fontSize: '14px', color: 'var(--secondary-text)' }}>系统提示词：</label>
+              <textarea
+                value={systemPrompt}
+                onChange={(e) => setSystemPrompt(e.target.value)}
+                placeholder="为 AI 设置上下文规则或身份，例如：你是一个严谨的中文写作助手..."
+                className="form-input"
+                rows={4}
+                style={{ padding: '8px 10px', resize: 'vertical' }}
+              />
+              <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                <button
+                  onClick={handleSaveSystemPrompt}
+                  disabled={isSaveDisabled}
+                  style={{ padding: '6px 12px', border: '1px solid var(--border-light)', borderRadius: 6, background: 'var(--btn-bg, #fff)', opacity: isSaveDisabled ? 0.6 : 1, cursor: isSaveDisabled ? 'not-allowed' : 'pointer' }}
+                >
+                  {saveBtnText}
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* 模型选择器 */}
           <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border-light)' }}>
@@ -390,6 +449,16 @@ export default function AIChatSidebar({ isOpen, onClose }: AIChatSidebarProps) {
             </button>
           )}
           <button
+            onClick={() => setShowSettings((s) => !s)}
+            className="ai-chat-icon-btn"
+            title="系统提示词设置"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" />
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9A1.65 1.65 0 0 0 10 3.09V3a2 2 0 1 1 4 0v.09c0 .66.39 1.25 1 1.51.57.26 1.25.17 1.74-.24l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06c-.41.49-.5 1.17-.24 1.74.26.61.85 1 1.51 1H21a2 2 0 1 1 0 4h-.09c-.66 0-1.25.39-1.51 1Z" />
+            </svg>
+          </button>
+          <button
             onClick={onClose}
             className="ai-chat-icon-btn"
             title="关闭侧边栏"
@@ -400,6 +469,30 @@ export default function AIChatSidebar({ isOpen, onClose }: AIChatSidebarProps) {
           </button>
         </div>
       </div>
+
+      {/* 设置面板（桌面端） */}
+      {showSettings && (
+        <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border-light)', display: 'grid', gap: '8px' }}>
+          <label style={{ fontSize: '14px', color: 'var(--secondary-text)' }}>系统提示词：</label>
+          <textarea
+            value={systemPrompt}
+            onChange={(e) => setSystemPrompt(e.target.value)}
+            placeholder="为 AI 设置上下文规则或身份，例如：你是一个严谨的中文写作助手..."
+            className="form-input"
+            rows={4}
+            style={{ padding: '8px 10px', resize: 'vertical' }}
+          />
+          <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+            <button
+              onClick={handleSaveSystemPrompt}
+              disabled={isSaveDisabled}
+              style={{ padding: '6px 12px', border: '1px solid var(--border-light)', borderRadius: 6, background: 'var(--btn-bg, #fff)', opacity: isSaveDisabled ? 0.6 : 1, cursor: isSaveDisabled ? 'not-allowed' : 'pointer' }}
+            >
+              {saveBtnText}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* 模型选择器 */}
       <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border-light)' }}>
