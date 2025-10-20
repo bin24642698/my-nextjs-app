@@ -1,8 +1,9 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
-const AI_API_URL = 'http://114.55.8.214:10000/v1';
-const AI_API_KEY = 'sk-bTeyYvmFC9TgCceScubbJof60qmym8uHynEZQ1vaMicoXM24';
+// 上游 AI 服务基础地址与密钥（按需修改为你的服务）
+const AI_API_URL = 'http://89.58.27.245:10000/v1';
+const AI_API_KEY = 'sk-DVxzoToQTLb1ZbXx2aqT5vcFkvlFvWQtPSuU7d9egGGe3oZG';
 const AI_MODEL = 'gemini-2.5-pro';
 
 // 不同模型的配置
