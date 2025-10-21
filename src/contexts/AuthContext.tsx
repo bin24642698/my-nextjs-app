@@ -42,19 +42,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // 监听会话变化
     const { data: subscription } = supabase.auth.onAuthStateChange((_event, session) => {
+      // 中文说明：会话变化时，及时同步用户状态，避免界面卡在加载中。
       setUser(session?.user ?? null);
     });
 
     return () => {
       mounted = false;
-      subscription.subscription.unsubscribe();
+      // 中文说明：正确取消订阅，避免内存泄漏或重复回调。
+      subscription.unsubscribe();
     };
   }, [supabase]);
 
   const signOut = async () => {
+    // 中文说明：直接跳转到登录页，避免先进入受保护首页再二次重定向导致的“一直转圈”。
     await supabase.auth.signOut();
     setUser(null);
-    router.replace("/");
+    router.replace("/auth/login");
   };
 
   const value = useMemo(() => ({ user, loading, signOut }), [user, loading]);
