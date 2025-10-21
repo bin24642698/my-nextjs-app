@@ -18,16 +18,18 @@ interface Message {
 interface AIChatSidebarProps {
   isOpen: boolean;
   onClose: () => void;
-  // 中文说明：可选章节与当前章节，用于“关联章节”功能
+  // 中文说明：可选章节与当前章节，用于"关联章节"功能
   chapters?: Chapter[];
   currentChapterId?: string;
+  // 中文说明：当前文档ID，用于隔离不同作品的关联章节记忆
+  documentId?: string;
 }
 
 const MIN_WIDTH = 300;
 const MAX_WIDTH = 800;
 const DEFAULT_WIDTH = 400;
 
-export default function AIChatSidebar({ isOpen, onClose, chapters = [], currentChapterId }: AIChatSidebarProps) {
+export default function AIChatSidebar({ isOpen, onClose, chapters = [], currentChapterId, documentId }: AIChatSidebarProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -61,9 +63,23 @@ export default function AIChatSidebar({ isOpen, onClose, chapters = [], currentC
   // 中文说明：保存按钮可用性与文案
   const isSaveDisabled = loadingPrompt || savingPrompt || savedIndicator;
   const saveBtnText = savingPrompt ? '保存中...' : (savedIndicator ? '已保存' : '保存');
-  // 中文说明：“关联章节”弹窗与选中集合
+  // 中文说明："关联章节"弹窗与选中集合（默认空数组，不关联任何章节）
   const [showAssociateModal, setShowAssociateModal] = useState(false);
-  const [selectedChapterIds, setSelectedChapterIds] = useState<string[]>([]);
+  const [selectedChapterIds, setSelectedChapterIds] = useState<string[]>(() => {
+    // 从localStorage读取该文档的上次关联章节记忆（基于documentId隔离）
+    if (typeof window !== 'undefined' && documentId) {
+      const storageKey = `ai-associated-chapters-${documentId}`;
+      const saved = localStorage.getItem(storageKey);
+      if (saved) {
+        try {
+          return JSON.parse(saved);
+        } catch {
+          return [];
+        }
+      }
+    }
+    return [];
+  });
   const handleSaveSystemPrompt = async () => {
     if (isSaveDisabled) return;
     try {
@@ -143,13 +159,13 @@ export default function AIChatSidebar({ isOpen, onClose, chapters = [], currentC
     };
   }, []);
 
-  // 中文说明：根据当前章节初始化默认关联（若尚未选择）
+  // 中文说明：持久化选中的章节到localStorage（基于documentId隔离）
   useEffect(() => {
-    if (currentChapterId && selectedChapterIds.length === 0) {
-      setSelectedChapterIds([currentChapterId]);
+    if (typeof window !== 'undefined' && documentId) {
+      const storageKey = `ai-associated-chapters-${documentId}`;
+      localStorage.setItem(storageKey, JSON.stringify(selectedChapterIds));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentChapterId]);
+  }, [selectedChapterIds, documentId]);
 
   // 开始拖拽
   const startResizing = (e: React.MouseEvent) => {

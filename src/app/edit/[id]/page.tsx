@@ -232,6 +232,7 @@ export default function EditPage() {
             onClose={() => setIsAIChatOpen(false)}
             chapters={chapters}
             currentChapterId={currentChapterId}
+            documentId={fileId}
           />
         )}
       </main>
