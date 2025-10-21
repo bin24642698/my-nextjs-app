@@ -3,6 +3,7 @@
 // 输出：Supabase 返回的会话/错误信息。
 
 import { NextRequest, NextResponse } from "next/server";
+import { mapSupabaseAuthError } from "../_utils";
 
 export async function POST(req: NextRequest) {
   try {
@@ -36,10 +37,8 @@ export async function POST(req: NextRequest) {
 
     const data = await resp.json();
     if (!resp.ok) {
-      return NextResponse.json(
-        { error: data?.error_description || data?.msg || "登录失败" },
-        { status: resp.status }
-      );
+      const zh = mapSupabaseAuthError(data, resp.status) || "登录失败";
+      return NextResponse.json({ error: zh }, { status: resp.status });
     }
 
     // 中文说明：原样返回 access_token/refresh_token/user 等，前端接收后设置会话。
@@ -48,4 +47,3 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: e?.message || "服务器错误" }, { status: 500 });
   }
 }
-

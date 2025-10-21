@@ -3,6 +3,7 @@
 // 输出：Supabase 返回的用户/会话/错误信息（视项目设置是否需要邮件确认）。
 
 import { NextRequest, NextResponse } from "next/server";
+import { mapSupabaseAuthError } from "../_utils";
 
 export async function POST(req: NextRequest) {
   try {
@@ -36,10 +37,8 @@ export async function POST(req: NextRequest) {
 
     const data = await resp.json();
     if (!resp.ok) {
-      return NextResponse.json(
-        { error: data?.error_description || data?.msg || "注册失败" },
-        { status: resp.status }
-      );
+      const zh = mapSupabaseAuthError(data, resp.status) || "注册失败";
+      return NextResponse.json({ error: zh }, { status: resp.status });
     }
 
     return NextResponse.json(data);
@@ -47,4 +46,3 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: e?.message || "服务器错误" }, { status: 500 });
   }
 }
-
