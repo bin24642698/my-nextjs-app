@@ -25,20 +25,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     let mounted = true;
-    // 初始化时获取当前用户（无论成功或失败，都应结束 loading）
-    (async () => {
-      try {
-        const { data } = await supabase.auth.getUser();
-        if (!mounted) return;
-        setUser(data.user ?? null);
-      } catch (err) {
-        if (!mounted) return;
-        console.warn("获取登录状态失败：", err);
-        setUser(null);
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    })();
+    // 初始化时获取当前用户
+    supabase.auth.getUser().then(({ data }) => {
+      if (!mounted) return;
+      setUser(data.user ?? null);
+      setLoading(false);
+    });
 
     // 监听会话变化
     const { data: subscription } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -67,3 +59,4 @@ export function useAuth() {
   if (!ctx) throw new Error("useAuth 必须在 AuthProvider 内使用");
   return ctx;
 }
+
