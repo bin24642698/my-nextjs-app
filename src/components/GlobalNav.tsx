@@ -1,7 +1,8 @@
-'use client';
+"use client";
 
 import { useRouter, usePathname } from 'next/navigation';
 import { useState } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface GlobalNavProps {
   title?: string;
@@ -16,6 +17,7 @@ export default function GlobalNav({ title = '文档编辑平台', showBackButton
   const pathname = usePathname();
   // 移动端菜单开关
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { user, loading, signOut } = useAuth();
 
   const navClassName = `bg-white border-b border-light shadow-sm z-20 ${sticky ? 'sticky top-0' : ''}`;
 
@@ -111,12 +113,49 @@ export default function GlobalNav({ title = '文档编辑平台', showBackButton
             </button>
           </div>
 
-          {/* 右侧自定义内容 */}
-          {rightContent && (
-            <div className="flex items-center space-x-2 ml-4">
-              {rightContent}
-            </div>
-          )}
+          {/* 右侧内容：优先使用外部传入的 rightContent；否则根据登录状态显示 */}
+          <div className="flex items-center space-x-2 ml-4">
+            {rightContent ? (
+              rightContent
+            ) : loading ? (
+              <span className="text-secondary text-sm">加载中…</span>
+            ) : user ? (
+              <>
+                <span className="hidden sm:inline text-sm text-secondary max-w-[160px] truncate" title={user.email || ''}>
+                  {user.email}
+                </span>
+                <button
+                  onClick={signOut}
+                  className="px-4 py-2 rounded-lg text-base font-bold text-white"
+                  style={{ backgroundColor: '#111827' }}
+                  title="退出登录"
+                  type="button"
+                >
+                  退出
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={() => router.push('/auth/login')}
+                  className="px-4 py-2 rounded-lg text-base font-bold text-primary hover:text-blue-600 hover:bg-light transition-all"
+                  title="登录"
+                  type="button"
+                >
+                  登录
+                </button>
+                <button
+                  onClick={() => router.push('/auth/register')}
+                  className="px-4 py-2 rounded-lg text-base font-bold text-white"
+                  style={{ backgroundColor: '#111827' }}
+                  title="注册"
+                  type="button"
+                >
+                  注册
+                </button>
+              </>
+            )}
+          </div>
         </div>
       </div>
     </nav>
@@ -166,6 +205,43 @@ export default function GlobalNav({ title = '文档编辑平台', showBackButton
             </svg>
             画布工作流
           </button>
+          {/* 认证相关 - 移动端 */}
+          <div className="h-px w-full bg-border-light" />
+          {loading ? (
+            <div className="px-3 py-2 text-secondary">加载中…</div>
+          ) : user ? (
+            <>
+              <div className="px-3 py-2 text-sm text-secondary truncate" title={user.email || ''}>
+                {user.email}
+              </div>
+              <button
+                onClick={() => { setMobileOpen(false); signOut(); }}
+                className="w-full flex items-center justify-start px-3 py-2 rounded-lg text-base font-bold transition-all text-white"
+                style={{ backgroundColor: '#111827' }}
+                title="退出登录"
+              >
+                退出登录
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                onClick={() => { setMobileOpen(false); router.push('/auth/login'); }}
+                className={`w-full flex items-center justify-start px-3 py-2 rounded-lg text-base font-bold transition-all text-primary hover:text-blue-600 hover:bg-light`}
+                title="登录"
+              >
+                登录
+              </button>
+              <button
+                onClick={() => { setMobileOpen(false); router.push('/auth/register'); }}
+                className={`w-full flex items-center justify-start px-3 py-2 rounded-lg text-base font-bold transition-all text-white`}
+                style={{ backgroundColor: '#111827' }}
+                title="注册"
+              >
+                注册
+              </button>
+            </>
+          )}
         </div>
       </div>
     )}
