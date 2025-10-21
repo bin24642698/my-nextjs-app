@@ -5,7 +5,7 @@
 // 复用 UI 与交互逻辑，避免重复代码。
 
 import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { getSupabaseBrowser } from "@/utils/supabaseClient";
 
 type Mode = "login" | "register";
@@ -17,6 +17,7 @@ export default function AuthForm({ mode }: { mode: Mode }) {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const searchParams = useSearchParams();
 
   // 中文说明：封装提交逻辑，根据 mode 调用不同的后端 API。
   const onSubmit = async (e: React.FormEvent) => {
@@ -48,8 +49,10 @@ export default function AuthForm({ mode }: { mode: Mode }) {
         }
 
         if (mode === "login") {
-          // 中文说明：登录成功后返回首页或你想要的页面。
-          router.replace("/");
+          // 中文说明：登录成功后优先跳回 next 参数指定的路径，避免丢失上下文。
+          const next = searchParams?.get("next");
+          const isSafePath = next && next.startsWith("/") && !next.startsWith("//");
+          router.replace(isSafePath ? (next as string) : "/");
         } else {
           // 中文说明：注册成功后的提示（若开启邮箱验证，此处不会立即登录）。
           setSuccess("注册成功，请检查邮箱完成验证（如已开启）。");
