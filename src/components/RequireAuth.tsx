@@ -27,18 +27,27 @@ export default function RequireAuth({ children }: { children: React.ReactNode })
   const searchParams = useSearchParams();
   const { user, loading } = useAuth();
   const [redirecting, setRedirecting] = useState(false);
+  const [waited, setWaited] = useState(false);
 
   const isPublic = useMemo(() => isPublicPath(pathname), [pathname]);
 
+  // 超时兜底：若 2s 后仍在 loading，视为未登录，触发跳转逻辑
+  useEffect(() => {
+    if (!isPublic && loading && !waited) {
+      const t = setTimeout(() => setWaited(true), 2000);
+      return () => clearTimeout(t);
+    }
+  }, [loading, isPublic, waited]);
+
   // 未登录且访问受保护页面时，跳转到登录页
   useEffect(() => {
-    if (loading || isPublic) return;
+    if ((loading && !waited) || isPublic) return;
     if (!user && !redirecting) {
       const next = pathname + (searchParams?.toString() ? `?${searchParams.toString()}` : "");
       setRedirecting(true);
       router.replace(`/auth/login?next=${encodeURIComponent(next)}`);
     }
-  }, [loading, user, isPublic, pathname, searchParams, router, redirecting]);
+  }, [loading, waited, user, isPublic, pathname, searchParams, router, redirecting]);
 
   // 在登录页/注册页，如已登录且带 next 参数，则跳回 next（可选择保留，当前仅保护全局即可）
   useEffect(() => {
@@ -51,7 +60,7 @@ export default function RequireAuth({ children }: { children: React.ReactNode })
   }, [loading, user, pathname, searchParams, router]);
 
   // 加载中或正在重定向时的占位
-  if ((loading && !isPublic) || redirecting) {
+  if (((loading && !isPublic) && !waited) || redirecting) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-secondary">正在验证登录状态…</div>
@@ -65,4 +74,3 @@ export default function RequireAuth({ children }: { children: React.ReactNode })
   // 未登录时会在 effect 中触发跳转，这里返回空以避免闪烁
   return null;
 }
-
