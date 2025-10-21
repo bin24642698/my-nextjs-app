@@ -1,39 +1,31 @@
-// 章节数据结构
-export interface Chapter {
+// 通用内容块（章节/设定/角色/知识库共用）
+export interface ContentBlock {
   id: string;
   title: string;
   content: string;
+}
+
+// 章节数据结构
+export interface Chapter extends ContentBlock {}
+
+export type WorkItemType = 'setting' | 'character' | 'knowledge';
+
+// 工作条目数据结构（设定/角色/知识库与章节保持一致的内容结构）
+export interface WorkItem extends ContentBlock {
+  documentId: string; // 所属文档ID
+  createdAt: number;
+  updatedAt: number;
+  type: WorkItemType;
 }
 
 // 设定条目数据结构
-export interface SettingItem {
-  id: string;
-  title: string;
-  content: string;
-  documentId: string; // 所属文档ID
-  createdAt: number;
-  updatedAt: number;
-}
+export type SettingItem = WorkItem & { type: 'setting' };
 
 // 角色条目数据结构
-export interface CharacterItem {
-  id: string;
-  name: string;
-  content: string;
-  documentId: string; // 所属文档ID
-  createdAt: number;
-  updatedAt: number;
-}
+export type CharacterItem = WorkItem & { type: 'character' };
 
 // 知识库条目数据结构
-export interface KnowledgeItem {
-  id: string;
-  title: string;
-  content: string;
-  documentId: string; // 所属文档ID
-  createdAt: number;
-  updatedAt: number;
-}
+export type KnowledgeItem = WorkItem & { type: 'knowledge' };
 
 // IndexedDB 数据库结构定义
 export interface DocumentSchema {

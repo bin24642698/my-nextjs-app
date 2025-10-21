@@ -13,13 +13,20 @@ export class SettingItemService {
 
     return new Promise((resolve, reject) => {
       const request = index.getAll(documentId);
-      request.onsuccess = () => resolve(request.result);
+      request.onsuccess = () => {
+        const items = (request.result as SettingItem[]).map(item => ({
+          ...item,
+          title: item.title ?? '未命名设定',
+          type: 'setting',
+        }));
+        resolve(items);
+      };
       request.onerror = () => reject(request.error);
     });
   }
 
   // 创建新设定
-  static async create(item: Omit<SettingItem, 'id' | 'createdAt' | 'updatedAt'>): Promise<SettingItem> {
+  static async create(item: Omit<SettingItem, 'id' | 'createdAt' | 'updatedAt' | 'type'>): Promise<SettingItem> {
     const db = await getDB();
     const now = Date.now();
     const newItem: SettingItem = {
@@ -27,6 +34,7 @@ export class SettingItemService {
       id: crypto.randomUUID(),
       createdAt: now,
       updatedAt: now,
+      type: 'setting',
     };
 
     return new Promise((resolve, reject) => {
@@ -57,6 +65,8 @@ export class SettingItemService {
           ...updates,
           id, // 确保ID不变
           updatedAt: Date.now(),
+          type: 'setting',
+          title: updates.title ?? existing.title ?? '未命名设定',
         };
 
         const putRequest = store.put(updated);
@@ -88,12 +98,19 @@ export class CharacterItemService {
 
     return new Promise((resolve, reject) => {
       const request = index.getAll(documentId);
-      request.onsuccess = () => resolve(request.result);
+      request.onsuccess = () => {
+        const items = (request.result as (CharacterItem & { name?: string })[]).map(item => ({
+          ...item,
+          title: item.title ?? item.name ?? '未命名角色',
+          type: 'character',
+        }));
+        resolve(items);
+      };
       request.onerror = () => reject(request.error);
     });
   }
 
-  static async create(item: Omit<CharacterItem, 'id' | 'createdAt' | 'updatedAt'>): Promise<CharacterItem> {
+  static async create(item: Omit<CharacterItem, 'id' | 'createdAt' | 'updatedAt' | 'type'>): Promise<CharacterItem> {
     const db = await getDB();
     const now = Date.now();
     const newItem: CharacterItem = {
@@ -101,6 +118,7 @@ export class CharacterItemService {
       id: crypto.randomUUID(),
       createdAt: now,
       updatedAt: now,
+      type: 'character',
     };
 
     return new Promise((resolve, reject) => {
@@ -130,6 +148,8 @@ export class CharacterItemService {
           ...updates,
           id,
           updatedAt: Date.now(),
+          type: 'character',
+          title: updates.title ?? existing.title ?? (existing as any).name ?? '未命名角色',
         };
 
         const putRequest = store.put(updated);
@@ -160,12 +180,19 @@ export class KnowledgeItemService {
 
     return new Promise((resolve, reject) => {
       const request = index.getAll(documentId);
-      request.onsuccess = () => resolve(request.result);
+      request.onsuccess = () => {
+        const items = (request.result as KnowledgeItem[]).map(item => ({
+          ...item,
+          title: item.title ?? '未命名知识',
+          type: 'knowledge',
+        }));
+        resolve(items);
+      };
       request.onerror = () => reject(request.error);
     });
   }
 
-  static async create(item: Omit<KnowledgeItem, 'id' | 'createdAt' | 'updatedAt'>): Promise<KnowledgeItem> {
+  static async create(item: Omit<KnowledgeItem, 'id' | 'createdAt' | 'updatedAt' | 'type'>): Promise<KnowledgeItem> {
     const db = await getDB();
     const now = Date.now();
     const newItem: KnowledgeItem = {
@@ -173,6 +200,7 @@ export class KnowledgeItemService {
       id: crypto.randomUUID(),
       createdAt: now,
       updatedAt: now,
+      type: 'knowledge',
     };
 
     return new Promise((resolve, reject) => {
@@ -202,6 +230,8 @@ export class KnowledgeItemService {
           ...updates,
           id,
           updatedAt: Date.now(),
+          type: 'knowledge',
+          title: updates.title ?? existing.title ?? '未命名知识',
         };
 
         const putRequest = store.put(updated);
