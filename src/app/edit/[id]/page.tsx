@@ -222,6 +222,7 @@ export default function EditPage() {
             currentChapterId={currentChapterId}
             onChapterChange={handleChapterChange}
             onChaptersUpdate={handleChaptersUpdate}
+            documentId={fileId}
           />
         </div>
 

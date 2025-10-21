@@ -6,7 +6,7 @@ export async function getDB(): Promise<IDBDatabase> {
   if (dbInstance) return dbInstance;
 
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open('FileUploadPlatform', 2); // 升级版本号
+    const request = indexedDB.open('FileUploadPlatform', 3); // 升级版本号到3
 
     request.onerror = () => {
       reject(new Error('Failed to open IndexedDB'));
@@ -46,6 +46,27 @@ export async function getDB(): Promise<IDBDatabase> {
         promptStore.createIndex('category', 'category', { unique: false });
         promptStore.createIndex('createdAt', 'createdAt', { unique: false });
         promptStore.createIndex('updatedAt', 'updatedAt', { unique: false });
+      }
+
+      // 创建设定条目存储
+      if (!db.objectStoreNames.contains('settingItems')) {
+        const settingStore = db.createObjectStore('settingItems', { keyPath: 'id' });
+        settingStore.createIndex('documentId', 'documentId', { unique: false });
+        settingStore.createIndex('updatedAt', 'updatedAt', { unique: false });
+      }
+
+      // 创建角色条目存储
+      if (!db.objectStoreNames.contains('characterItems')) {
+        const characterStore = db.createObjectStore('characterItems', { keyPath: 'id' });
+        characterStore.createIndex('documentId', 'documentId', { unique: false });
+        characterStore.createIndex('updatedAt', 'updatedAt', { unique: false });
+      }
+
+      // 创建知识库条目存储
+      if (!db.objectStoreNames.contains('knowledgeItems')) {
+        const knowledgeStore = db.createObjectStore('knowledgeItems', { keyPath: 'id' });
+        knowledgeStore.createIndex('documentId', 'documentId', { unique: false });
+        knowledgeStore.createIndex('updatedAt', 'updatedAt', { unique: false });
       }
     };
   });

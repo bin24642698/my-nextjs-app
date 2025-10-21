@@ -5,6 +5,36 @@ export interface Chapter {
   content: string;
 }
 
+// 设定条目数据结构
+export interface SettingItem {
+  id: string;
+  title: string;
+  content: string;
+  documentId: string; // 所属文档ID
+  createdAt: number;
+  updatedAt: number;
+}
+
+// 角色条目数据结构
+export interface CharacterItem {
+  id: string;
+  name: string;
+  content: string;
+  documentId: string; // 所属文档ID
+  createdAt: number;
+  updatedAt: number;
+}
+
+// 知识库条目数据结构
+export interface KnowledgeItem {
+  id: string;
+  title: string;
+  content: string;
+  documentId: string; // 所属文档ID
+  createdAt: number;
+  updatedAt: number;
+}
+
 // IndexedDB 数据库结构定义
 export interface DocumentSchema {
   id: string;
@@ -48,4 +78,7 @@ export interface DatabaseSchema {
   settings: SettingsSchema;
   cache: CacheSchema;
   systemPrompts: SystemPromptSchema;
+  settingItems: SettingItem;
+  characterItems: CharacterItem;
+  knowledgeItems: KnowledgeItem;
 }
